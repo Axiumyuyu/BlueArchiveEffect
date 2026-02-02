@@ -1,0 +1,219 @@
+reason-blacklist:
+  #- COMMAND
+
+mobs:
+
+  # atk类型： normal(常规，默认值，可不写), burst(爆发), piercing(贯通), mystic(神秘), viber(振动), decompose(分解)
+  # def类型： # normal(常规装甲，默认值，可不写), light(轻装甲), heavy(重装甲), special(特殊装甲), elastic(弹力装甲), composite(复合装甲)
+
+  # ===========================
+  # 主世界 - 常见敌对生物
+  # ===========================
+
+  # 苦力怕：充满火药且皮肤独特 -> 弹力装甲(Elastic)，爆炸攻击 -> 爆发(Burst)
+  CREEPER:
+    atk: burst
+    def: elastic
+
+  # 僵尸：腐肉身躯 -> 轻装甲(Light)，感染/抓挠 -> 分解(Decompose)或常规
+  # 设计意图：作为最常见的怪，怕爆发(红)，鼓励玩家用红武器割草
+  ZOMBIE:
+    atk: burst
+    def: light
+
+  # 骷髅：骨架结构 -> 轻装甲(Light)，弓箭射击 -> 贯通(Piercing)
+  SKELETON:
+    atk: piercing
+    def: light
+
+  # 蜘蛛/洞穴蜘蛛：几丁质外壳但易碎 -> 轻装甲(Light)
+  SPIDER:
+    atk: normal
+    def: light
+  CAVE_SPIDER:
+    atk: decompose # 毒性攻击
+    def: light
+
+  # 女巫：魔法长袍 -> 特殊装甲(Special)，药水投掷 -> 神秘(Mystic)
+  WITCH:
+    atk: mystic
+    def: special
+
+  # 史莱姆：粘液身体 -> 弹力装甲(Elastic)，物理撞击 -> 常规
+  SLIME:
+    atk: normal
+    def: elastic
+
+  # 幻翼：亡灵且虚幻 -> 特殊装甲(Special)，俯冲尖啸 -> 振动(Viber)
+  PHANTOM:
+    atk: viber
+    def: special
+
+  BREEZE:
+    atk: burst
+    def: elastic
+
+  # ===========================
+  # 主世界 - 变种与灾厄村民
+  # ===========================
+
+  # 尸壳：干燥的尸体，比普通僵尸硬 -> 重装甲(Heavy)
+  HUSK:
+    atk: normal
+    def: heavy
+
+  # 溺尸：水肿尸体 -> 轻装甲(Light)，三叉戟 -> 贯通(Piercing)
+  DROWNED:
+    atk: piercing
+    def: light
+
+  # 卫道士：手持斧头 -> 爆发(Burst)，普通衣物 -> 轻装甲(Light)
+  VINDICATOR:
+    atk: piercing
+    def: light
+
+  # 唤魔者：法师 -> 特殊装甲(Special)，尖牙/魔法 -> 神秘(Mystic)
+  EVOKER:
+    atk: mystic
+    def: special
+
+  # 劫掠兽：重型护甲兽 -> 重装甲(Heavy)，撞击 -> 爆发(Burst)
+  RAVAGER:
+    atk: burst
+    def: heavy
+
+  # 恼鬼：灵体 -> 特殊装甲(Special)，穿墙攻击 -> 神秘(Mystic)
+  VEX:
+    atk: mystic
+    def: special
+
+  # 铁傀儡：纯金属 -> 重装甲(Heavy)，重拳 -> 爆发(Burst)
+  IRON_GOLEM:
+    atk: burst
+    def: heavy
+
+  # ===========================
+  # 下界生物
+  # ===========================
+
+  # 僵尸猪灵：半腐烂但有金甲 -> 轻装甲(Light)
+  # (为了不让下界全是重装甲，保留一些给爆发属性发挥的空间)
+  ZOMBIFIED_PIGLIN:
+    atk: mystic
+    def: light
+
+  PIGLIN:
+    atk: piercing
+    def: light
+
+  # 猪灵暴君：全套金甲且强壮 -> 重装甲(Heavy)，斧头 -> 爆发(Burst)
+  PIGLIN_BRUTE:
+    atk: burst
+    def: heavy
+
+  # 烈焰人：元素生物 -> 特殊装甲(Special)，火球 -> 爆发(Burst)
+  BLAZE:
+    atk: burst
+    def: special
+
+  # 恶魂：巨大的幽灵 -> 特殊装甲(Special)，火球爆炸 -> 爆发(Burst)
+  GHAST:
+    atk: burst
+    def: special
+
+  # 凋灵骷髅：被烧焦的骨骼，非常坚硬 -> 复合装甲(Composite)
+  # 设计意图：强迫玩家在下界要塞使用分解(绿)或重击(红)
+  WITHER_SKELETON:
+    atk: decompose # 凋零效果
+    def: composite
+
+  # 岩浆怪：岩浆核心 -> 弹力装甲(Elastic)
+  MAGMA_CUBE:
+    atk: burst
+    def: elastic
+
+  # ===========================
+  # 末地生物
+  # ===========================
+
+  # 末影人：空间生物 -> 特殊装甲(Special)，搬运/攻击 -> 神秘(Mystic)
+  ENDERMAN:
+    atk: mystic
+    def: special
+
+  # 潜影贝：拥有坚硬的外壳 -> 复合装甲(Composite)，导弹 -> 神秘(Mystic)
+  SHULKER:
+    atk: mystic
+    def: composite
+
+  # ===========================
+  # 海洋与特殊
+  # ===========================
+
+  # 守卫者/远古守卫者：带有尖刺的湿滑皮肤 -> 弹力装甲(Elastic)
+  # 远古守卫者作为小Boss -> 复合装甲(Composite)
+  GUARDIAN:
+    atk: mystic # 激光
+    def: elastic
+  ELDER_GUARDIAN:
+    atk: mystic
+    def: composite
+
+  # 监守者：幽匿块构成，吸收声音 -> 复合装甲(Composite)，音波攻击 -> 振动(Viber)
+  # 这是一个极强的怪物，复合装甲弱分解(Decompose)，符合"分解幽匿"的概念
+  WARDEN:
+    atk: viber
+    def: composite
+
+  # 凋灵：BOSS -> 复合装甲(Composite)，凋零之首 -> 分解(Decompose)
+  WITHER:
+    atk: decompose
+    def: composite
+
+
+# ===========================
+# 末影龙
+# 尚未实现，目前只是简单的随机属性且无变化，未来会进一步实装
+# ===========================
+ENDER_DRAGON:
+  rule:
+
+    # 根据名字判断种类和强度
+    # 种类前缀
+    name:
+      "frost":
+        atk: burst
+        def: composite
+      "blazing":
+        atk: piercing
+        def: elastic
+      "warp":
+        atk: mystic
+        def: special
+      "last":
+        atk: normal
+        def: normal
+      "Zombified":
+        atk: decompose
+        def: light
+      "sculk":
+        atk: viber
+        def: composite
+      "mossy":
+        atk: mystic
+        def: heavy
+
+    # 等级前缀
+    level:
+      1:
+        name: "Fledgeling"
+      2:
+        name: "Powerful"
+      3:
+        name: "Cruel"
+      4:
+        name: "Immortal"
+      5:
+        name: "Ferocious"
+      6:
+        name: "Primordial"

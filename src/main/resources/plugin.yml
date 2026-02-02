@@ -1,0 +1,15 @@
+name: BlueArchiveEffect
+version: '1.0.0'
+main: me.axiumyu.blueArchiveEffect.BlueArchiveEffect
+libraries:
+  - 'org.jetbrains.kotlin:kotlin-stdlib:2.3.0'
+api-version: '1.21'
+depend:
+  - packetevents
+permissions:
+  baeffect.use:
+    description: 允许查看属性
+    default: true
+  baeffect.admin:
+    description: 允许设置属性和重载
+    default: op
