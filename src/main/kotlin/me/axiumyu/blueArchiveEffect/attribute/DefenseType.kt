@@ -2,11 +2,11 @@ package me.axiumyu.blueArchiveEffect.attribute
 
 import net.kyori.adventure.text.format.NamedTextColor
 
-enum class DefenseType (
-    val id: String,
-    val displayName: String,
-    val color: NamedTextColor
-){
+enum class DefenseType(
+    override val id: String,
+    override val displayName: String,
+    override val color: NamedTextColor
+) : Type{
     NORMAL_D("normal", "常规装甲", NamedTextColor.GRAY),
     LIGHT("light", "轻装甲", NamedTextColor.RED),
     HEAVY("heavy", "重装甲", NamedTextColor.YELLOW),

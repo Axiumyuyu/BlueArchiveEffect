@@ -5,12 +5,6 @@ import me.axiumyu.blueArchiveEffect.attribute.DefenseType.*
 import me.axiumyu.blueArchiveEffect.attribute.AttackModifier.*
 import kotlin.to
 
-data class Attack(
-    val atk: AttackType,
-    val def: DefenseType
-)
-
-
 object DamageTable {
 
     @JvmField

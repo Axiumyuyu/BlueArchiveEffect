@@ -1,56 +1,38 @@
 package me.axiumyu.blueArchiveEffect.comand
 
 import com.mojang.brigadier.Command
-import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import io.papermc.paper.command.brigadier.CommandSourceStack
-import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.Commands.argument
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.plugin
 import me.axiumyu.blueArchiveEffect.Util.chooseSelectedEntity
 import me.axiumyu.blueArchiveEffect.Util.node
-import me.axiumyu.blueArchiveEffect.attribute.DefenseType
+import me.axiumyu.blueArchiveEffect.Util.error
 import me.axiumyu.blueArchiveEffect.attribute.AttackType
-import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
+import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+
 import me.axiumyu.blueArchiveEffect.config.Config
-import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
-import kotlin.jvm.java
 
-/*
- * /batype check <item/player> <selector> <atk/def> (需要baeffect.use权限)
- * /batype set <item/player> <selector> <atk/def> <type>(需要baeffect.admin权限,若有modifier,则必须指明数值)
- * /batype reload(需要baeffect.admin权限)
- * e.g.
- * /batype check @n[type=creeper] atk
- * /batype set @s atk BURST
- * /batype set axiumyu atk burst
- */
-@Deprecated("Use TypeHelperNew instead")
 object TypeHelper {
-
-
-
     fun register() {
-        val manager = plugin.lifecycleManager
-        manager.registerEventHandler(LifecycleEvents.COMMANDS) { event ->
+        plugin.lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) { event ->
             val commands = event.registrar()
 
-            // 根命令 /batype
+            // 根节点
             val root = node("batype")
-                .requires { it.sender.hasPermission("baeffect.use") }
+                .requires { it.sender.hasPermission("batype.use") }
 
             // 1. Reload (Admin)
             val reloadNode = node("reload")
-                .requires { it.sender.hasPermission("baeffect.admin") }
+                .requires { it.sender.hasPermission("batype.admin") }
                 .executes { ctx ->
                     Config.loadConfig()
                     ctx.source.sender.sendMessage(
@@ -59,124 +41,157 @@ object TypeHelper {
                     Command.SINGLE_SUCCESS
                 }
 
-            // 2. Check (Use)
-            // /batype check <selector> <atk/def>
+            // === Check 分支 ===
             val checkNode = node("check")
-                .then(
-                    Commands.argument("target", ArgumentTypes.entity()) // 选择单个实体
-                        .then(
-                            node("atk")
-                                .executes { ctx -> checkAttribute(ctx, true) }
-                        )
-                        .then(
-                            node("def")
-                                .executes { ctx -> checkAttribute(ctx, false) }
-                        )
+                // check entity <selector> ...
+                .then(node("entity")
+                    .then(argument("target", ArgumentTypes.entity())
+                        .then(node("atk").executes { checkEntity(it, true) })
+                        .then(node("def").executes { checkEntity(it, false) })
+                    )
+                )
+                // check item <selector> ...
+                .then(node("item")
+                    .then(argument("target", ArgumentTypes.entity())
+                        .then(node("atk").executes { checkItem(it, true) })
+                        .then(node("def").executes { checkItem(it, false) })
+                    )
                 )
 
-            // 3. Set (Admin)
-            // /batype set <selector> atk <type>
-            // /batype set <selector> def <type>
+            // === Set 分支 ===
             val setNode = node("set")
                 .requires { it.sender.hasPermission("baeffect.admin") }
-                .then(
-                    argument("target", ArgumentTypes.entity())
-                        // 分支：设置攻击属性
-                        .then(
-                            node("atk")
-                            .then(
-                                argument("type", StringArgumentType.word())
-                                    .suggests { _, builder ->
-                                        // 自动补全所有攻击类型ID
-                                        AttackType.entries.forEach { builder.suggest(it.id) }
-                                        builder.buildFuture()
-                                    }
-                                    .executes { ctx -> setAttribute(ctx, true) }
+                // set entity <selector> <atk/def> <type>
+                .then(node("entity")
+                    .then(argument("target", ArgumentTypes.entity())
+                        .then(node("atk")
+                            .then(argument("type", StringArgumentType.word())
+                                .suggests { _, b -> AttackType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
+                                .executes { setEntity(it, true) }
                             )
                         )
-                        // 分支：设置防御属性
-                        .then(
-                            node("def")
-                            .then(
-                                argument("type", StringArgumentType.word())
-                                    .suggests { _, builder ->
-                                        // 自动补全所有防御类型ID
-                                        DefenseType.entries.forEach { builder.suggest(it.id) }
-                                        builder.buildFuture()
-                                    }
-                                    .executes { ctx -> setAttribute(ctx, false) }
+                        .then(node("def")
+                            .then(argument("type", StringArgumentType.word())
+                                .suggests { _, b -> DefenseType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
+                                .executes { setEntity(it, false) }
                             )
                         )
-
+                    )
+                )
+                // set item <selector> <atk/def> <type>
+                .then(node("item")
+                    .then(argument("target", ArgumentTypes.entity())
+                        .then(node("atk")
+                            .then(argument("type", StringArgumentType.word())
+                                .suggests { _, b -> AttackType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
+                                .executes { setItem(it, true) }
+                            )
+                        )
+                        .then(node("def")
+                            .then(argument("type", StringArgumentType.word())
+                                .suggests { _, b -> DefenseType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
+                                .executes { setItem(it, false) }
+                            )
+                        )
+                    )
                 )
 
-            // 组装命令树
-            root.then(reloadNode)
+            // 注册
             root.then(checkNode)
             root.then(setNode)
-
-            // 注册
-            commands.register(root.build(), "BlueArchive RPG 属性管理指令")
+            root.then(reloadNode)
+            commands.register(root.build(), "BlueArchive RPG 属性管理")
         }
     }
 
-    // --- 执行逻辑：检查属性 ---
-    private fun checkAttribute(ctx: CommandContext<CommandSourceStack>, isAttack: Boolean): Int {
-        val sender = ctx.source.sender
-        val targetEntity = chooseSelectedEntity(ctx,"target")
+    // ================= 实体逻辑 (Entity) =================
 
-        if (targetEntity !is LivingEntity) {
-            sender.sendMessage(mm.deserialize("<red>错误: 目标必须是生物！"))
-            return 0
-        }
+    private fun checkEntity(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
+        val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
 
-        if (isAttack) {
-            val type = targetEntity.atkType
-            sender.sendMessage(formatMessage(targetEntity.name, "攻击属性", type.displayName, type.color))
+        if (isAtk) {
+            // 使用扩展属性 .atkType
+            val type = target.atkType
+            ctx.sendMsgToSender(target.name, "自身攻击", type.displayName, type.color)
         } else {
-            val type = targetEntity.defType
-            sender.sendMessage(formatMessage(targetEntity.name, "防御属性", type.displayName, type.color))
+            // 使用扩展属性 .defType
+            val type = target.defType
+            ctx.sendMsgToSender(target.name, "自身防御", type.displayName, type.color)
         }
         return Command.SINGLE_SUCCESS
     }
 
-    // --- 执行逻辑：设置属性 ---
-    private fun setAttribute(ctx: CommandContext<CommandSourceStack>, isAttack: Boolean): Int {
-        val sender = ctx.source.sender
-        val targetEntity = chooseSelectedEntity(ctx, "target")
+    private fun setEntity(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
+        val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
         val typeId = StringArgumentType.getString(ctx, "type")
 
-        if (targetEntity !is LivingEntity) {
-            sender.sendMessage(mm.deserialize("<red>错误: 目标必须是生物！"))
-            return 0
-        }
-
-        if (isAttack) {
-            val type = AttackType.fromId(typeId)
-            if (type == null) {
-                sender.sendMessage(mm.deserialize("<red>未知攻击属性: $typeId"))
-                return 0
-            }
-            targetEntity.atkType = type
-            sender.sendMessage(mm.deserialize("<green>已将目标 <white>${targetEntity.name} <green>的攻击属性设置为 <${type.color.asHexString()}>${type.displayName}"))
+        if (isAtk) {
+            val type = AttackType.fromId(typeId) ?: return error(ctx, "未知攻击类型: $typeId")
+            // 直接赋值给扩展属性
+            target.atkType = type
+            ctx.sendMsgToSender(target.name, "自身攻击", type.displayName, type.color)
         } else {
-            val type = DefenseType.fromId(typeId)
-            if (type == null) {
-                sender.sendMessage(mm.deserialize("<red>未知防御属性: $typeId"))
-                return 0
-            }
-            targetEntity.defType = type
-            sender.sendMessage(mm.deserialize("<green>已将目标 <white>${targetEntity.name} <green>的防御属性设置为 <${type.color.asHexString()}>${type.displayName}"))
+            val type = DefenseType.fromId(typeId) ?: return error(ctx, "未知防御类型: $typeId")
+            // 直接赋值给扩展属性
+            target.defType = type
+            ctx.sendMsgToSender(target.name, "自身防御", type.displayName, type.color)
         }
-
         return Command.SINGLE_SUCCESS
     }
 
+    // ================= 物品逻辑 (Item) =================
 
+    private fun checkItem(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
+        val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
+        if (target !is LivingEntity) return error(ctx, "该目标无法持有物品")
 
-    private fun formatMessage(targetName: String, category: String, value: String, color: NamedTextColor): Component {
-        return mm.deserialize(
-            "<gray>目标 <white>$targetName <gray>的 $category: <${color.asHexString()}>$value"
-        )
+        val item = target.equipment?.itemInMainHand
+        if (item == null || item.type.isAir) return error(ctx, "目标手中没有物品")
+
+        val meta = item.itemMeta
+        // ItemMeta 实现了 PersistentDataHolder，所以可以直接用 .atkType/.defType
+        if (isAtk) {
+            val type = meta.atkType
+            ctx.sendMsgToSender(target.name, "手持物品攻击", type.displayName, type.color)
+        } else {
+            val type = meta.defType
+            ctx.sendMsgToSender(target.name, "手持物品防御", type.displayName, type.color)
+        }
+        return Command.SINGLE_SUCCESS
+    }
+
+    private fun setItem(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
+        val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
+        if (target !is LivingEntity) return error(ctx, "该目标无法持有物品")
+
+        val item = target.equipment?.itemInMainHand
+        if (item == null || item.type.isAir) return error(ctx, "目标手中没有物品")
+
+        val typeId = StringArgumentType.getString(ctx, "type")
+        val meta = item.itemMeta
+
+        if (isAtk) {
+            val type = AttackType.fromId(typeId) ?: return error(ctx, "未知攻击类型")
+
+            // 1. 设置数据 (使用扩展属性)
+            meta.atkType = type
+
+            ctx.sendMsgToSender(target.name, "手持物品攻击", type.displayName, type.color)
+        } else {
+            val type = DefenseType.fromId(typeId) ?: return error(ctx, "未知防御类型")
+
+            // 1. 设置数据
+            meta.defType = type
+
+            ctx.sendMsgToSender(target.name, "手持物品防御", type.displayName, type.color)
+        }
+
+        // 3. 应用 Meta
+        item.itemMeta = meta
+        return Command.SINGLE_SUCCESS
+    }
+
+    private fun CommandContext<CommandSourceStack>.sendMsgToSender(target: String, context: String, value: String, color: NamedTextColor) {
+        return source.sender.sendMessage(mm.deserialize("<gray>目标 <white>$target <gray>的 $context: <${color.asHexString()}>$value"))
     }
 }

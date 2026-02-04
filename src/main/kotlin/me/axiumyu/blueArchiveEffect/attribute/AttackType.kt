@@ -3,10 +3,10 @@ package me.axiumyu.blueArchiveEffect.attribute
 import net.kyori.adventure.text.format.NamedTextColor
 
 enum class AttackType(
-    val id: String,
-    val displayName: String,
-    val color: NamedTextColor
-) {
+    override val id: String,
+    override val displayName: String,
+    override val color: NamedTextColor
+) : Type{
     NORMAL_A("normal", "常规", NamedTextColor.GRAY),
     BURST("burst", "爆发", NamedTextColor.RED),
     PIERCING("piercing", "贯通", NamedTextColor.YELLOW),

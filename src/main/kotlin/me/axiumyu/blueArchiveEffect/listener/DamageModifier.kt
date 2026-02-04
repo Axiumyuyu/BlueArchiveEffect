@@ -2,12 +2,9 @@ package me.axiumyu.blueArchiveEffect.listener
 
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.attribute.AttackModifier
-import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DamageTable.calculateBaseDamage
-import me.axiumyu.blueArchiveEffect.attribute.DefenseType
-import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkModifier
+import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.modifier
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
-import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defModifier
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
@@ -27,27 +24,27 @@ object DamageModifier : Listener {
 
         // 攻击属性
         val atkType = attacker.atkType
-        val atkItemType = attacker.equipment?.itemInMainHand?.itemMeta?.atkType ?: return
-        val finalAtkType = if (atkItemType != AttackType.NORMAL_A) {
-            atkItemType
-        } else {
-            atkType
-        }
+//        val atkItemType = attacker.equipment?.itemInMainHand?.itemMeta?.atkType ?: return
+//        val finalAtkType = if (atkItemType != AttackType.NORMAL_A) {
+//            atkItemType
+//        } else {
+//            atkType
+//        }
 
         // 防御属性
         val defType = defender.defType
-        val defItemType = defender.equipment?.chestplate?.itemMeta?.defType ?: return
-        val finalDefType = if (defItemType != DefenseType.NORMAL_D) {
-            defItemType
-        } else {
-            defType
-        }
+//        val defItemType = defender.equipment?.chestplate?.itemMeta?.defType ?: return
+//        val finalDefType = if (defItemType != DefenseType.NORMAL_D) {
+//            defItemType
+//        } else {
+//            defType
+//        }
 
-        val rate = calculateBaseDamage(finalAtkType, finalDefType)
+        val rate = calculateBaseDamage(atkType, defType)
 
         // 属性特效加成
-        val atkEffect = attacker.atkModifier(atkType)
-        val defEffect = defender.defModifier(defType)
+        val atkEffect = attacker.modifier(atkType)
+        val defEffect = defender.modifier(defType)
 
         val (sound, text) = when (rate) {
             AttackModifier.WEAK -> {

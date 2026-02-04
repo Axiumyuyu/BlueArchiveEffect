@@ -2,17 +2,16 @@ package me.axiumyu.blueArchiveEffect
 
 import com.github.retrooper.packetevents.PacketEvents
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
+import me.axiumyu.blueArchiveEffect.comand.ModifierHelper
 import me.axiumyu.blueArchiveEffect.comand.TypeHelper
-import me.axiumyu.blueArchiveEffect.comand.TypeHelperChatGPT
-import me.axiumyu.blueArchiveEffect.comand.TypeHelperNew
 import me.axiumyu.blueArchiveEffect.config.Config
+import me.axiumyu.blueArchiveEffect.listener.ChargeTypeCore
+import me.axiumyu.blueArchiveEffect.listener.CreateCore
 import me.axiumyu.blueArchiveEffect.listener.DamageModifier
+import me.axiumyu.blueArchiveEffect.listener.ItemForgeType
 import me.axiumyu.blueArchiveEffect.listener.MobSpawnType
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.scheduler.BukkitTask
 import kotlin.getValue
 
 class BlueArchiveEffect : JavaPlugin() {
@@ -25,7 +24,7 @@ class BlueArchiveEffect : JavaPlugin() {
 
         const val NAMESPACE_KEY = "ba_attr"
 
-        val updateTask by lazy(LazyThreadSafetyMode.NONE) { UpdateTask() }
+//        val updateTask by lazy(LazyThreadSafetyMode.NONE) { UpdateTask() }
 
     }
     override fun onLoad() {
@@ -33,11 +32,8 @@ class BlueArchiveEffect : JavaPlugin() {
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
         PacketEvents.getAPI().load()
 
-        TypeHelperNew.register()
-//        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) { event ->
-//            TypeHelperChatGPT.register(event.registrar())
-//        }
-        updateTask.runTaskTimer(this,  1L, 1L)
+        TypeHelper.register()
+        ModifierHelper.register()
     }
 
     override fun onEnable() {
@@ -48,7 +44,10 @@ class BlueArchiveEffect : JavaPlugin() {
 
         listOf(
             DamageModifier,
-            MobSpawnType
+            MobSpawnType,
+            CreateCore,
+            ChargeTypeCore,
+            ItemForgeType
         ).forEach {
             server.pluginManager.registerEvents(it, this)
         }
@@ -56,6 +55,6 @@ class BlueArchiveEffect : JavaPlugin() {
 
     override fun onDisable() {
         PacketEvents.getAPI().terminate()
-        updateTask.cancel()
+//        updateTask.cancel()
     }
 }

@@ -19,6 +19,7 @@ object MobSpawnType : Listener {
         if (entity.type == EntityType.ENDER_DRAGON){
             entity.atkType = AttackType.entries.random()
             entity.defType = DefenseType.entries.random()
+            return
         }
         if (reasonBlackList.contains(event.spawnReason)) return
         if (!mobTypesList.keys.contains(event.entityType)) return

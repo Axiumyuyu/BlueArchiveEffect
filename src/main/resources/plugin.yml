@@ -7,9 +7,15 @@ api-version: '1.21'
 depend:
   - packetevents
 permissions:
-  baeffect.use:
+  batype.use:
     description: 允许查看属性
     default: true
-  baeffect.admin:
+  batype.admin:
     description: 允许设置属性和重载
+    default: op
+  bamodifier.use:
+    description: 允许查看属性加成
+    default: true
+  bamodifier.admin:
+    description: 允许设置属性加成
     default: op
