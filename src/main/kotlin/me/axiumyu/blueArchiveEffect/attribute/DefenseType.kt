@@ -10,7 +10,7 @@ enum class DefenseType(
     NORMAL_D("normal", "常规装甲", NamedTextColor.GRAY),
     LIGHT("light", "轻装甲", NamedTextColor.RED),
     HEAVY("heavy", "重装甲", NamedTextColor.YELLOW),
-    SPECIAL("mystic", "特殊装甲", NamedTextColor.BLUE),
+    SPECIAL("special", "特殊装甲", NamedTextColor.BLUE),
     ELASTIC("elastic", "弹力装甲", NamedTextColor.LIGHT_PURPLE),
     COMPOSITE("composite", "复合装甲", NamedTextColor.GREEN);
 

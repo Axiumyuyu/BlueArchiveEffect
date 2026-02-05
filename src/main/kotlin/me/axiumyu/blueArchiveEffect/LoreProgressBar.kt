@@ -3,103 +3,109 @@ package me.axiumyu.blueArchiveEffect
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.Util.toPlainText
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
+import java.awt.Color.HSBtoRGB
+import kotlin.math.roundToInt
 
-/**
- * 一个用于在 Item Lore 中维护「数值 + 可视化条」的轻量工具类
- * - 使用 MiniMessage 进行格式化
- * - 只修改指定行，不破坏其他 Lore
- * - 满值时自动切换为彩虹条
- */
-class LoreProgressBar(
-    private val max: Int,
-    private val barLength: Int = 20,
-    private val filledColor: TextColor = NamedTextColor.GREEN,
-    private val emptyColor: TextColor = NamedTextColor.GRAY,
-    private val barChar: Char = '|',
-    private val numberLinePrefix: String
-) {
+object SmartLoreBar {
 
     /**
-     * 更新物品 Lore 中的数值与进度条
-     * @param item 原物品
-     * @param value 当前数值
-     * @return 一个新的 ItemStack（不原地修改）
+     * 智能更新 Lore 中的数值和进度条
+     *
+     * @param prefix 数值行的识别前缀（纯文本，不带颜色），例如 "充能条："
+     * @param current 新的当前数值
+     * @param max 最大数值
+     * @param totalBars 进度条长度（默认为20）
+     * @param filledChar 填充字符（默认为 ■）
+     * @param emptyChar 空字符（默认为 □）
+     * @param filledColor 填充颜色 MiniMessage Tag（默认为 <green>）
+     * @param emptyColor 空颜色 MiniMessage Tag（默认为 <gray>）
      */
-    fun updateLore(item: ItemStack, value: Int): ItemStack {
-        val meta = item.itemMeta ?: return item
-        val lore = meta.lore() ?: return item
+    fun ItemStack.updateSmartLore(
+        prefix: String,
+        current: Int,
+        max: Int,
+        totalBars: Int = 20,
+        filledChar: Char = '■',
+        emptyChar: Char = '□',
+        filledColor: String = "<green>",
+        emptyColor: String = "<gray>"
+    ): ItemStack {
+        val meta = this.itemMeta ?: return this
+        val originalLore = meta.lore() ?: return this // 如果没有 Lore，则无法更新，直接返回
 
-        val clamped = value.coerceIn(0, max)
+        // 使用 map 生成一个新的 List，遍历每一行进行特征匹配和替换
+        val newLore = originalLore.map { line ->
+            // 1. 转为纯文本，去除颜色代码，用于逻辑判断
+            val plainText = line.toPlainText()
 
-        val newLore = lore.map { line ->
             when {
-                isNumberLine(line) -> buildNumberLine(clamped)
-                isBarLine(line) -> buildBarLine(clamped)
+                // 特征 A: 这一行以指定的 prefix 开头 (例如 "充能条：")
+                plainText.startsWith(prefix) -> {
+                    // 重新生成数值行
+                    mm.deserialize("<!i><gray>$prefix<white>${current.coerceIn(0,max)}/$max")
+                }
+
+                // 特征 B: 这一行看起来像进度条 (只包含方块字符和空格)
+                isBarLine(plainText, filledChar, emptyChar) -> {
+                    // 重新生成进度条行
+                    generateBarComponent(current, max, totalBars, filledChar, emptyChar, filledColor, emptyColor)
+                }
+
+                // 其他行: 保持原样
                 else -> line
             }
         }
 
         meta.lore(newLore)
-        item.itemMeta = meta
-        return item
+        this.itemMeta = meta
+        return this
     }
 
-    /** 判断是否是“充能条：x/y”这一行 */
-    private fun isNumberLine(component: Component): Boolean {
-        return component.toPlainText().startsWith(numberLinePrefix)
+    /**
+     * 判断一行纯文本是否是进度条
+     * 逻辑：去除空格后，字符串不为空，且只包含 filledChar 或 emptyChar
+     */
+    private fun isBarLine(plainText: String, filledChar: Char, emptyChar: Char): Boolean {
+        val trimmed = plainText.replace(" ", "") // 忽略空格干扰
+        if (trimmed.isEmpty()) return false
+
+        // 检查是否所有字符都在允许的字符集中
+        return trimmed.all { it == filledChar || it == emptyChar }
     }
 
-    /** 判断是否是由 barChar 组成的进度条 */
-    private fun isBarLine(component: Component): Boolean {
-        val text = component.toPlainText()
-        return text.isNotEmpty() && text.all { it == barChar }
-    }
+    /**
+     * 生成进度条 Component (复用之前的逻辑)
+     */
+    private fun generateBarComponent(
+        current: Int,
+        max: Int,
+        totalBars: Int,
+        filledChar: Char,
+        emptyChar: Char,
+        filledColor: String,
+        emptyColor: String
+    ): Component {
+        val safeMax = if (max <= 0) 1 else max
+        val percentage = (current.toDouble() / safeMax).coerceIn(0.0, 1.0)
 
-    /** 构建数值行 */
-    private fun buildNumberLine(value: Int): Component {
-        return mm.deserialize("<!i>${numberLinePrefix}${value}/${max}")
-    }
-
-    /** 构建进度条 */
-    private fun buildBarLine(value: Int): Component {
-        if (value >= max) {
-            // 满值：彩虹条
-            return Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .append(rainbowBar())
-                .build()
+        // 满值彩虹特效
+        if (percentage >= 1.0) {
+            val fullBar = filledChar.toString().repeat(totalBars)
+            return mm.deserialize("<!i><rainbow>$fullBar</rainbow>")
         }
 
-        val filled = (value.toDouble() / max * barLength).toInt()
+        val filledCount = (percentage * totalBars).roundToInt()
+        val emptyCount = totalBars - filledCount
 
-        val builder = Component.text().decoration(TextDecoration.ITALIC, false)
+        val sb = StringBuilder()
+        sb.append("<!i>")
+        sb.append(filledColor).append(filledChar.toString().repeat(filledCount))
+        sb.append(emptyColor).append(emptyChar.toString().repeat(emptyCount))
 
-        repeat(barLength) { index ->
-            val color = if (index < filled) filledColor else emptyColor
-            builder.append(
-                Component.text(barChar.toString()).color(color)
-            )
-        }
-
-        return builder.build()
-    }
-
-    /** 生成彩虹进度条 */
-    private fun rainbowBar(): Component {
-        val builder = Component.text()
-        for (i in 0 until barLength) {
-            val hue = i.toFloat() / barLength
-            builder.append(
-                Component.text(barChar.toString())
-                    .color(TextColor.color(java.awt.Color.HSBtoRGB(hue, 1f, 1f)))
-            )
-        }
-        return builder.build()
+        return mm.deserialize(sb.toString())
     }
 }

@@ -2,10 +2,10 @@ package me.axiumyu.blueArchiveEffect.attribute
 
 import io.papermc.paper.registry.RegistryAccess.registryAccess
 import io.papermc.paper.registry.RegistryKey
+import io.papermc.paper.registry.keys.AttributeKeys
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.NAMESPACE_KEY
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.Util.nullIf
-import me.axiumyu.blueArchiveEffect.Util.toPlainText
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.LivingEntity
 import org.bukkit.inventory.ItemRarity
@@ -42,20 +42,24 @@ object TypeDataStorage {
     @JvmStatic
     var PersistentDataHolder.atkType: AttackType
         get() {
-            val weapon = if (this is LivingEntity){
+            val weapon = if (this is LivingEntity) {
                 this.equipment?.itemInMainHand?.persistentDataContainer[keyAttack, PersistentDataType.STRING]
             } else null
 
             val weaponType = AttackType.fromId(weapon).nullIf(AttackType.NORMAL_A)
 
-            return weaponType ?: AttackType.fromId(persistentDataContainer[keyAttack, PersistentDataType.STRING]) ?: AttackType.NORMAL_A
+            return weaponType ?: AttackType.fromId(persistentDataContainer[keyAttack, PersistentDataType.STRING])
+            ?: AttackType.NORMAL_A
         }
         set(value) {
-            persistentDataContainer.apply {
-                this[keyAttack, PersistentDataType.STRING] = value.id
+            if (value == AttackType.NORMAL_A){
+                persistentDataContainer.remove(keyAttack)
+            } else {
+                persistentDataContainer[keyAttack, PersistentDataType.STRING] = value.id
             }
+
             if (this is ItemMeta) {
-                updateItemLore(this, value)
+                setEnchant(this, value.nullIf(AttackType.NORMAL_A))
             }
         }
 
@@ -65,18 +69,22 @@ object TypeDataStorage {
     @JvmStatic
     var PersistentDataHolder.defType: DefenseType
         get() {
-            val armor = if (this is LivingEntity){
+            val armor = if (this is LivingEntity) {
                 this.equipment?.chestplate?.persistentDataContainer[keyDefense, PersistentDataType.STRING]
             } else null
             val armorType = DefenseType.fromId(armor).nullIf(DefenseType.NORMAL_D)
-            return armorType ?: DefenseType.fromId(persistentDataContainer[keyDefense, PersistentDataType.STRING]) ?: DefenseType.NORMAL_D
+            return armorType ?: DefenseType.fromId(persistentDataContainer[keyDefense, PersistentDataType.STRING])
+            ?: DefenseType.NORMAL_D
         }
         set(value) {
-            persistentDataContainer.apply {
-                this[keyDefense, PersistentDataType.STRING] = value.id
+            if (value == DefenseType.NORMAL_D){
+                persistentDataContainer.remove(keyDefense)
+            } else{
+                persistentDataContainer[keyDefense, PersistentDataType.STRING] = value.id
             }
+
             if (this is ItemMeta) {
-                updateItemLore(this, value)
+                setEnchant(this, value.nullIf(DefenseType.NORMAL_D))
             }
         }
 
@@ -101,26 +109,25 @@ object TypeDataStorage {
     }
 
     /**
-     * 简单的 Lore 更新逻辑
+     * 统一使用数据包附魔代替lore显示
      * 为了代码整洁，你可以将此逻辑移回 AttributeDataService
      */
     @JvmStatic
-    fun updateItemLore(meta: ItemMeta, type :Type?) {
-
-        val lore = meta.lore() ?: mutableListOf()
-        val newLore = lore.filter {
-            val str = it.toPlainText()
-            !str.contains("攻击属性") && !str.contains("防御属性")
-        }.toMutableList()
-
-        if (type is AttackType && type != AttackType.NORMAL_A) {
-            newLore.add(mm.deserialize("<!i><gray>攻击属性: <${type.color.asHexString()}>${type.displayName}"))
+    fun setEnchant(meta: ItemMeta, type: Type?) {
+        val enchantments = meta.enchants
+        if (type == null) {
+            val types = enchantments.filter { it.key.key.key == "battr" }
+            if (types.isEmpty()) return
+            types.forEach { meta.removeEnchant(it.key) }
+            return
         }
-        if (type is DefenseType && type != DefenseType.NORMAL_D) {
-            newLore.add(mm.deserialize("<!i><gray>防御属性: <${type.color.asHexString()}>${type.displayName}"))
+        if (enchantments.isEmpty()) {
+            val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey(
+                "battr",
+                if (type is AttackType) "weapons/${type.id}" else "armors/${type.id}"
+            )] ?: throw IllegalStateException("No BA Enchantments found")
+            meta.addEnchant(ench, 1, true)
         }
-
-        meta.lore(newLore)
     }
 
     @JvmStatic
@@ -128,27 +135,29 @@ object TypeDataStorage {
         val isCore = item.persistentDataContainer[NamespacedKey("overenchant", "item_type"), PersistentDataType.STRING]
         val level = item.persistentDataContainer[NamespacedKey("overenchant", "rune_level"), PersistentDataType.INTEGER]
         val enchants = item.enchantments.count()
-        return isCore == "CORE" && level == 3 && enchants == 0
+        return isCore == "RUNE" && level == 3 && enchants <= 1
     }
 
     @JvmStatic
-    fun isRightPotion(item: ItemStack): Boolean{
+    fun isRightPotion(item: ItemStack): Boolean {
         val potion = item.itemMeta as? PotionMeta ?: return false
-        return potion.basePotionType == PotionType.TURTLE_MASTER
+        return potion.basePotionType == PotionType.LONG_TURTLE_MASTER || potion.basePotionType == PotionType.STRONG_TURTLE_MASTER
     }
 
     @JvmStatic
-    fun createCore(from: ItemStack, type: Type?, modifier : (ItemStack.() -> Any)? = null): ItemStack{
+    fun createCore(from: ItemStack, type: Type?, modifier: (ItemStack.() -> Any)? = null): ItemStack {
         val new = from.clone()
         new.editMeta {
+            it.atkType = AttackType.NORMAL_A
+            it.defType = DefenseType.NORMAL_D
             it.setMaxStackSize(1)
             it.setRarity(ItemRarity.RARE)
             it.setEnchantmentGlintOverride(true)
+            it.customName(mm.deserialize("<!i><gray>属性核心"))
         }
         if (type == null) {
             new.editMeta {
-                val lore = mutableListOf(
-                    mm.deserialize("<!i><gray>属性核心"),
+                val lore = listOf(
                     mm.deserialize("<!i><aqua>----------------"),
                     mm.deserialize("<!i><aqua>尚无属性")
                 )
@@ -157,15 +166,22 @@ object TypeDataStorage {
         } else {
 
             val id = type.id
-            val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey("battr",id)] ?: throw IllegalStateException("No BA Enchantments found")
-            new.addUnsafeEnchantment(ench, 1)
+            val isWeapon = type is AttackType
+//            if (isWeapon) new.itemMeta.atkType = type else new.itemMeta.defType = type as DefenseType
+//            getServer().sendMessage(mm.deserialize("set type to ${type.displayName}"))
+            if (new.enchantments.isEmpty()) {
+                val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey(
+                    "battr",
+                    if (isWeapon) "weapons/$id" else "armors/$id"
+                )] ?: throw IllegalStateException("No BA Enchantments found")
+                new.addUnsafeEnchantment(ench, 1)
+            }
             new.editMeta {
-                val lore = mutableListOf(
-                    mm.deserialize("<!i><gray>属性核心"),
-                    mm.deserialize("<!i><aqua>----------------"),
+                val lore = listOf(
+                    mm.deserialize("<!i><gray>----------------"),
                     mm.deserialize("<!i><aqua>属性：<${type.color.asHexString()}>${type.displayName}"),
                     mm.deserialize("<!i>充能条：0/100"),
-                    mm.deserialize("<!i><gray>||||||||||||||||||||")
+                    mm.deserialize("<!i><gray>□□□□□□□□□□□□□□□□□□□□")
                 )
                 it.lore(lore)
             }

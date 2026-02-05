@@ -4,6 +4,6 @@ import org.bukkit.scheduler.BukkitRunnable
 
 class UpdateTask : BukkitRunnable() {
     override fun run() {
-        HologramService.updateHolograms()
+        HologramService().updateHolograms()
     }
 }

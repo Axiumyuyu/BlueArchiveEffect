@@ -24,13 +24,11 @@ class BlueArchiveEffect : JavaPlugin() {
 
         const val NAMESPACE_KEY = "ba_attr"
 
-//        val updateTask by lazy(LazyThreadSafetyMode.NONE) { UpdateTask() }
+        val updateTask by lazy(LazyThreadSafetyMode.NONE) { EntityInfoDisplayTask() }
 
     }
     override fun onLoad() {
         super.onLoad()
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
-        PacketEvents.getAPI().load()
 
         TypeHelper.register()
         ModifierHelper.register()
@@ -40,7 +38,7 @@ class BlueArchiveEffect : JavaPlugin() {
         saveDefaultConfig()
         Config.loadConfig()
 
-        PacketEvents.getAPI().init()
+        updateTask.runTaskTimer(this, 0L, 1L)
 
         listOf(
             DamageModifier,
@@ -54,7 +52,6 @@ class BlueArchiveEffect : JavaPlugin() {
     }
 
     override fun onDisable() {
-        PacketEvents.getAPI().terminate()
-//        updateTask.cancel()
+        updateTask.cancel()
     }
 }

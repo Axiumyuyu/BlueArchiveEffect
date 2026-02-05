@@ -14,89 +14,104 @@ import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
-import org.bukkit.Bukkit.getOnlinePlayers
+import org.bukkit.Bukkit
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
-object HologramService {
+class HologramService {
 
-    // 存储玩家正在看到的虚假实体 ID: PlayerUUID -> FakeEntityID
-    private val playerViewingMap = ConcurrentHashMap<UUID, Int>()
+    // 存储玩家当前的观察状态
+    // Key: PlayerUUID
+    // Value: ViewingData (包含虚假实体ID 和 宿主实体ID)
+    private val viewMap = ConcurrentHashMap<UUID, ViewingData>()
 
-    // 存储虚假实体对应的宿主: FakeEntityID -> HostLivingEntity
-    private val fakeToHostMap = ConcurrentHashMap<Int, LivingEntity>()
-
-
+    data class ViewingData(val fakeEntityId: Int, val hostEntityId: Int)
 
     fun updateHolograms() {
-        for (player in getOnlinePlayers()) {
-            val target = rayTrace(player)
-            val currentFakeId = playerViewingMap[player.uniqueId]
+        for (player in Bukkit.getOnlinePlayers()) {
+            val rayTraceTarget = rayTrace(player)
+            val currentView = viewMap[player.uniqueId]
 
-            if (target == null || !shouldShow(target)) {
-                if (currentFakeId != null) removeHologram(player, currentFakeId)
-                continue
-            }
+            if (currentView != null) {
+                // === 玩家当前正在看某个全息图 ===
 
-            if (currentFakeId == null) {
-                createHologram(player, target)
-            } else {
-                // 如果换了目标，先删旧的
-                if (fakeToHostMap[currentFakeId] != target) {
-                    removeHologram(player, currentFakeId)
-                    createHologram(player, target)
+                // 获取宿主实体（通过ID获取，避免对象引用失效）
+                // 注意：在主线程运行此逻辑是安全的，如果是异步需注意 Bukkit.getEntity 线程安全
+                // 但 Entity.getEntityId 是安全的，我们可以尝试先从当前世界查找
+                val hostEntity = getEntityById(player.world, currentView.hostEntityId)
+
+                if (hostEntity != null && hostEntity.isValid && !hostEntity.isDead) {
+                    // 宿主还活着，检查是否需要切换目标
+
+                    if (rayTraceTarget != null && rayTraceTarget.entityId != currentView.hostEntityId) {
+                        // 1. 玩家把准星移到了另一个新怪物身上 -> 立即切换
+                        removeHologram(player, currentView.fakeEntityId)
+                        if (shouldShow(rayTraceTarget)) {
+                            createHologram(player, rayTraceTarget)
+                        }
+                    } else if (rayTraceTarget == null && !isLookingAt(player, hostEntity)) {
+                        // 2. 射线没打中，且视线偏离了宿主太多 -> 销毁
+                        removeHologram(player, currentView.fakeEntityId)
+                    } else {
+                        // 3. 射线打中了同一个怪 OR 射线虽然没打中但还在视线范围内（吸附） -> 更新位置
+                        moveHologram(player, currentView.fakeEntityId, hostEntity)
+                    }
                 } else {
-                    moveHologram(player, currentFakeId, target)
+                    // 宿主死了或消失了 -> 销毁
+                    removeHologram(player, currentView.fakeEntityId)
+                }
+            } else {
+                // === 玩家当前没看任何东西 ===
+                if (rayTraceTarget != null && shouldShow(rayTraceTarget)) {
+                    createHologram(player, rayTraceTarget)
                 }
             }
         }
     }
 
     private fun createHologram(player: Player, host: LivingEntity) {
-        val fakeId = 2000000 + Random.nextInt(1000000) // 安全范围内的虚假ID
+        val fakeId = 2000000 + Random.nextInt(1000000)
         val uuid = UUID.randomUUID()
         val loc = host.eyeLocation.add(0.0, 0.6, 0.0)
 
-        // 1. 生成实体包
+        // 1. Spawn
         val spawnPacket = WrapperPlayServerSpawnEntity(
             fakeId, uuid, EntityTypes.TEXT_DISPLAY,
             SpigotConversionUtil.fromBukkitLocation(loc), 0f, 0, null
         )
 
-        // 2. 元数据包 (核心：定义文本和外观)
+        // 2. Metadata
         val atk = host.atkType
         val def = host.defType
         val textComponent =
-            mm.deserialize("<${atk.color.asHexString()}>${atk.displayName} <gray> | <${def.color.asHexString()}>${def.displayName}")
+            mm.deserialize("<${atk.color.asHexString()}>${atk.displayName} <gray>/ <${def.color.asHexString()}>${def.displayName}")
 
-        val metadata = mutableListOf<EntityData<*>>()
-        // Index 23: Text (Component) - 1.21.4 对应位
-        metadata.add(EntityData(23, EntityDataTypes.ADV_COMPONENT, textComponent))
-        // Index 15: Billboard (设置为 3: CENTER, 随玩家旋转)
-        metadata.add(EntityData(15, EntityDataTypes.BYTE, 3.toByte()))
-        // Index 25: Background Color (设置为 0: 完全透明)
-        metadata.add(EntityData(25, EntityDataTypes.INT, 0))
-        // Index 27: Text Shadow (Boolean)
-        metadata.add(EntityData(27, EntityDataTypes.BOOLEAN, true))
+        val metadata = listOf(
+            EntityData(23, EntityDataTypes.ADV_COMPONENT, textComponent), // Text
+            EntityData(15, EntityDataTypes.BYTE, 3.toByte()),// Billboard: Center
+            EntityData(25, EntityDataTypes.INT, 0),
+            EntityData(27, EntityDataTypes.BYTE, 3.toByte())
+        )
+
+        // [关键修正] Flags: Shadow(1) | SeeThrough(2) | DefaultBackground(4)
+        // 这里只开启阴影(1)，类型必须是 Byte
+
 
         val metaPacket = WrapperPlayServerEntityMetadata(fakeId, metadata)
 
-        // 发送
+        val pm = PacketEvents.getAPI().playerManager
+        pm.sendPacket(player, spawnPacket)
+        pm.sendPacket(player, metaPacket)
 
-        PacketEvents.getAPI().playerManager.run {
-            sendPacket(player, spawnPacket)
-            sendPacket(player, metaPacket)
-        }
-
-        playerViewingMap[player.uniqueId] = fakeId
-        fakeToHostMap[fakeId] = host
+        viewMap[player.uniqueId] = ViewingData(fakeId, host.entityId)
     }
 
     private fun moveHologram(player: Player, fakeId: Int, host: LivingEntity) {
         val loc = host.eyeLocation.add(0.0, 0.6, 0.0)
+        // 确保 teleportPacket 位置更新
         val teleportPacket = WrapperPlayServerEntityTeleport(
             fakeId, SpigotConversionUtil.fromBukkitLocation(loc), false
         )
@@ -106,17 +121,42 @@ object HologramService {
     private fun removeHologram(player: Player, fakeId: Int) {
         val destroyPacket = WrapperPlayServerDestroyEntities(fakeId)
         PacketEvents.getAPI().playerManager.sendPacket(player, destroyPacket)
-        playerViewingMap.remove(player.uniqueId)
-        fakeToHostMap.remove(fakeId)
+        viewMap.remove(player.uniqueId)
     }
 
+    // --- 辅助逻辑 ---
+
     private fun rayTrace(player: Player): LivingEntity? {
+        // 射线检测 10 格
         val result = player.rayTraceEntities(10, false) ?: return null
         return result.hitEntity as? LivingEntity
     }
 
+    /**
+     * 宽松的视线检测（吸附逻辑）
+     * 检查玩家视线方向与"玩家到怪物向量"的夹角
+     */
+    private fun isLookingAt(player: Player, target: LivingEntity): Boolean {
+        val eye = player.eyeLocation
+        val toEntity = target.eyeLocation.toVector().subtract(eye.toVector())
+
+        // 距离太远直接放弃
+        if (toEntity.lengthSquared() > 100) return false // > 10 blocks
+
+        val direction = eye.direction
+        val dot = direction.normalize().dot(toEntity.normalize())
+
+        // dot 越接近 1，说明视线越对准怪物
+        // 0.96 大约是 15度角，允许一定的误差，防止稍微抖动就消失
+        return dot > 0.96
+    }
+
     private fun shouldShow(entity: LivingEntity): Boolean {
-        // 只有非常规属性才显示，减少视觉干扰
         return entity.atkType != AttackType.NORMAL_A || entity.defType != DefenseType.NORMAL_D
+    }
+
+    // 简单的 Helper，从 World 获取 Entity (Paper Api 优化过，性能尚可)
+    private fun getEntityById(world: org.bukkit.World, id: Int): LivingEntity? {
+        return world.entities.firstOrNull { it.entityId == id } as? LivingEntity
     }
 }

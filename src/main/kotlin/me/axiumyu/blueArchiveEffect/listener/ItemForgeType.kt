@@ -15,6 +15,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.PrepareAnvilEvent
 import org.bukkit.persistence.PersistentDataType
 
+// Tested
 object ItemForgeType : Listener {
 
     @EventHandler
@@ -23,14 +24,26 @@ object ItemForgeType : Listener {
         val typeCore = event.inventory.secondItem ?: return
 
         if (!isTypeCore(typeCore)) return
+        event.viewers.first().sendMessage("is core")
         if (typeCore.persistentDataContainer[keyCharge, PersistentDataType.INTEGER] != 100) {
             event.result = null
             return
         }
+        event.viewers.first().sendMessage("100")
         val atkType = typeCore.itemMeta.atkType.nullIf(AttackType.NORMAL_A)
-        val defType = equipment.itemMeta.defType.nullIf(DefenseType.NORMAL_D)
-        val finalType : Type= atkType ?: defType ?: return
-        val useKey = if (defType == null) keyAttack else keyDefense
-        equipment.itemMeta.persistentDataContainer[useKey, PersistentDataType.STRING] = finalType.id
+        val defType = typeCore.itemMeta.defType.nullIf(DefenseType.NORMAL_D)
+        event.viewers.first().sendMessage("atkType: $atkType, defType: $defType")
+        val  result = equipment.clone()
+        result.editMeta {
+            it.atkType = AttackType.NORMAL_A
+            it.defType = DefenseType.NORMAL_D
+            if (defType != null) {
+                it.defType = defType
+            } else if (atkType != null) {
+                it.atkType = atkType
+            }
+        }
+        event.result = result
+        event.view.repairCost = 10
     }
 }

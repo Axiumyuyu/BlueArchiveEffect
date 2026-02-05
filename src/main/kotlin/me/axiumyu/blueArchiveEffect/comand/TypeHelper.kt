@@ -16,7 +16,6 @@ import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
-
 import me.axiumyu.blueArchiveEffect.config.Config
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.LivingEntity

@@ -7,8 +7,7 @@ import kotlin.to
 
 object DamageTable {
 
-    @JvmField
-    val damageTable = mapOf(
+    private val damageTable = mapOf(
         BURST hit LIGHT to WEAK,
         BURST hit SPECIAL to RESIST,
         BURST hit ELASTIC to RESIST,
@@ -32,6 +31,7 @@ object DamageTable {
 
     infix fun AttackType.hit(armor: DefenseType) = Attack(this, armor)
 
+    @JvmStatic
     fun calculateBaseDamage(a: AttackType, d: DefenseType): AttackModifier {
         return damageTable[a hit d] ?: NC
     }

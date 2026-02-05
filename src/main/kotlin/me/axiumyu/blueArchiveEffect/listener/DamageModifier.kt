@@ -6,6 +6,7 @@ import me.axiumyu.blueArchiveEffect.attribute.DamageTable.calculateBaseDamage
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.modifier
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -49,12 +50,12 @@ object DamageModifier : Listener {
         val (sound, text) = when (rate) {
             AttackModifier.WEAK -> {
                 event.damage *= (rate.value + atkEffect - defEffect)
-                Sound.ITEM_SHIELD_BREAK to "<red>WEAK!!"
+                Sound.ENTITY_ZOMBIE_VILLAGER_CURE to "<red>WEAK!!"
             }
 
             AttackModifier.EFFECTIVE -> {
                 event.damage *= (rate.value + (atkEffect - defEffect) / 2.0)
-                Sound.BLOCK_ENCHANTMENT_TABLE_USE to "<orange>EFFECTIVE!"
+                Sound.BLOCK_ENCHANTMENT_TABLE_USE to "<gold>EFFECTIVE!"
             }
 
             AttackModifier.RESIST -> {

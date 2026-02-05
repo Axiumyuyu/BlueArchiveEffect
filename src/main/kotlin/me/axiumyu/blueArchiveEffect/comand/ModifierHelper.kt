@@ -13,12 +13,15 @@ import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.plugin
 import me.axiumyu.blueArchiveEffect.Util.chooseSelectedEntity
 import me.axiumyu.blueArchiveEffect.Util.error
 import me.axiumyu.blueArchiveEffect.Util.node
+import me.axiumyu.blueArchiveEffect.Util.nullIf
 import me.axiumyu.blueArchiveEffect.Util.suggestAll
 import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
+import me.axiumyu.blueArchiveEffect.attribute.Type
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.modifier
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+import org.bukkit.Bukkit.getServer
 
 /*
  * /bamodifier check/set <selector> <atk/def> <type> [value]
@@ -41,17 +44,17 @@ object ModifierHelper {
                             node("atk")
                                 .then(
                                     argument("type", StringArgumentType.word())
-                                        .suggests { _, b -> b.suggestAll(AttackType.entries); b.buildFuture() }
+                                        .suggests { _, b -> b.suggestAll(AttackType.entries.map { it.id.lowercase() }); b.buildFuture() }
                                         .executes { checkEntityModifier(it, true) }
                                 )
                         )
                         .then(
                             node("def")
-                            .then(
-                                argument("type", StringArgumentType.word())
-                                    .suggests { _, b -> b.suggestAll(DefenseType.entries); b.buildFuture() }
-                                    .executes { checkEntityModifier(it, false) }
-                            )
+                                .then(
+                                    argument("type", StringArgumentType.word())
+                                        .suggests { _, b -> b.suggestAll(DefenseType.entries.map { it.id.lowercase() }); b.buildFuture() }
+                                        .executes { checkEntityModifier(it, false) }
+                                )
                         )
                 )
 
@@ -66,18 +69,24 @@ object ModifierHelper {
                             node("atk")
                                 .then(
                                     argument("type", StringArgumentType.word())
-                                        .suggests { _, b -> b.suggestAll(AttackType.entries); b.buildFuture() }
-                                        .then(argument("value", DoubleArgumentType.doubleArg()))
-                                        .executes { setEntityModifier(it, true) }
+                                        .suggests { _, b -> b.suggestAll(AttackType.entries.map { it.id.lowercase() }); b.buildFuture() }
+                                        .then(
+                                            argument("value", DoubleArgumentType.doubleArg())
+                                                .executes { setEntityModifier(it, true) }
+                                        )
+
                                 )
                         )
                         .then(
                             node("def")
                                 .then(
                                     argument("type", StringArgumentType.word())
-                                        .suggests { _, b -> b.suggestAll(DefenseType.entries); b.buildFuture() }
-                                        .then(argument("value", DoubleArgumentType.doubleArg()))
-                                        .executes { setEntityModifier(it, false) }
+                                        .suggests { _, b -> b.suggestAll(DefenseType.entries.map { it.id.lowercase() }); b.buildFuture() }
+                                        .then(
+                                            argument("value", DoubleArgumentType.doubleArg())
+                                                .executes { setEntityModifier(it, false) }
+                                        )
+
                                 )
                         )
                 )
@@ -94,16 +103,18 @@ object ModifierHelper {
 
     private fun checkEntityModifier(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
         val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
-        val type = StringArgumentType.getString(ctx, "type")
+        val typeId = StringArgumentType.getString(ctx, "type")
 
         if (isAtk) {
             // 使用扩展属性 .atkType
-            val type = target.atkType
+            val type =
+                AttackType.fromId(typeId).nullIf(AttackType.NORMAL_A) ?: return error(ctx, "未知或不允许的攻击类型: $typeId")
             val modifier = target.modifier(type)
             ctx.sendMsgToSender(target.name, type, modifier)
         } else {
             // 使用扩展属性 .defType
-            val type = target.defType
+            val type =
+                DefenseType.fromId(typeId).nullIf(DefenseType.NORMAL_D) ?: return error(ctx, "未知或不允许的防御类型: $typeId")
             val modifier = target.modifier(type)
             ctx.sendMsgToSender(target.name, type, modifier)
         }
@@ -116,12 +127,14 @@ object ModifierHelper {
         val value = DoubleArgumentType.getDouble(ctx, "value")
 
         if (isAtk) {
-            val type = AttackType.fromId(typeId) ?: return error(ctx, "未知攻击类型: $typeId")
+            val type =
+                AttackType.fromId(typeId).nullIf(AttackType.NORMAL_A) ?: return error(ctx, "未知或不允许的攻击类型: $typeId")
             // 直接赋值给扩展属性
             target.modifier(type, value)
             ctx.sendMsgToSender(target.name, type, value)
         } else {
-            val type = DefenseType.fromId(typeId) ?: return error(ctx, "未知防御类型: $typeId")
+            val type =
+                DefenseType.fromId(typeId).nullIf(DefenseType.NORMAL_D) ?: return error(ctx, "未知或不允许的防御类型: $typeId")
             // 直接赋值给扩展属性
             target.modifier(type, value)
             ctx.sendMsgToSender(target.name, type, value)
@@ -133,17 +146,11 @@ object ModifierHelper {
 
     private fun CommandContext<CommandSourceStack>.sendMsgToSender(
         target: String,
-        type: Any,
+        type: Type,
         value: Double,
     ) {
-        if (type is AttackType) {
-            return source.sender.sendMessage(
-                mm.deserialize("<gray>目标 <white>$target <gray>的 <${type.color.asHexString()}>${type.displayName}属性加成：$value")
-            )
-        } else if (type is DefenseType) {
-            return source.sender.sendMessage(
-                mm.deserialize("<gray>目标 <white>$target <gray>的 <${type.color.asHexString()}>${type.displayName}属性加成：$value")
-            )
-        }
+        source.sender.sendMessage(
+            mm.deserialize("<gray>目标 <white>$target <gray>的 <${type.color.asHexString()}>${type.displayName}属性加成：$value")
+        )
     }
 }
