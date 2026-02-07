@@ -1,5 +1,5 @@
 name: BlueArchiveEffect
-version: '1.0.0'
+version: '0.1.0'
 main: me.axiumyu.blueArchiveEffect.BlueArchiveEffect
 libraries:
   - 'org.jetbrains.kotlin:kotlin-stdlib:2.3.0'
