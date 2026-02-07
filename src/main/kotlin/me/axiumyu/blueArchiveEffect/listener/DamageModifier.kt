@@ -49,17 +49,17 @@ object DamageModifier : Listener {
 
         val (sound, text) = when (rate) {
             AttackModifier.WEAK -> {
-                event.damage *= (rate.value + atkEffect - defEffect)
-                Sound.ENTITY_ZOMBIE_VILLAGER_CURE to "<red>WEAK!!"
+                event.damage *= (rate.value + atkEffect - defEffect).coerceAtLeast(0.0)
+                Sound.ITEM_SHIELD_BREAK to "<red>WEAK!!"
             }
 
             AttackModifier.EFFECTIVE -> {
-                event.damage *= (rate.value + (atkEffect - defEffect) / 2.0)
+                event.damage *= (rate.value + (atkEffect - defEffect) / 2.0).coerceAtLeast(0.0)
                 Sound.BLOCK_ENCHANTMENT_TABLE_USE to "<gold>EFFECTIVE!"
             }
 
             AttackModifier.RESIST -> {
-                event.damage *= (rate.value - atkEffect + defEffect)
+                event.damage *= (rate.value - atkEffect + defEffect).coerceAtLeast(0.0)
                 Sound.ITEM_SHIELD_BLOCK to "<blue>RESIST"
             }
 
@@ -73,6 +73,7 @@ object DamageModifier : Listener {
     }
 
     fun Player.inform(sound: Sound, text: String) {
+
         this.playSound(this, sound, 1.0f, 1.0f)
         this.sendActionBar { mm.deserialize(text) }
     }

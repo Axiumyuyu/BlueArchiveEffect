@@ -1,6 +1,9 @@
 reason-blacklist:
   #- COMMAND
 
+# 生物有多大的概率不按照配置文件定义的类型，随机选择属性生成
+variation-rate: 0.05
+
 mobs:
 
   # atk类型： normal(常规，默认值，可不写), burst(爆发), piercing(贯通), mystic(神秘), viber(振动), decompose(分解)
@@ -28,8 +31,9 @@ mobs:
 
   # 蜘蛛/洞穴蜘蛛：几丁质外壳但易碎 -> 轻装甲(Light)
   SPIDER:
-    atk: normal
+    atk: piercing
     def: light
+
   CAVE_SPIDER:
     atk: decompose # 毒性攻击
     def: light
@@ -41,7 +45,7 @@ mobs:
 
   # 史莱姆：粘液身体 -> 弹力装甲(Elastic)，物理撞击 -> 常规
   SLIME:
-    atk: normal
+    atk: viber
     def: elastic
 
   # 幻翼：亡灵且虚幻 -> 特殊装甲(Special)，俯冲尖啸 -> 振动(Viber)
@@ -71,6 +75,11 @@ mobs:
   VINDICATOR:
     atk: piercing
     def: light
+
+  ILLUSIONER:
+    atk: piercing
+    def: special
+
 
   # 唤魔者：法师 -> 特殊装甲(Special)，尖牙/魔法 -> 神秘(Mystic)
   EVOKER:

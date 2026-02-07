@@ -19,7 +19,7 @@ object CreateCore : Listener {
         }
 
         val second = event.inventory.secondItem ?: return
-        if (isRightPotion(second)) return
+        if (!isRightPotion(second)) return
 
         event.view.repairCost = 10
         event.result = createCore(input, null)

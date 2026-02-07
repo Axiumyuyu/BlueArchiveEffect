@@ -6,7 +6,9 @@ import io.papermc.paper.registry.keys.AttributeKeys
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.NAMESPACE_KEY
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.Util.nullIf
+import org.bukkit.Bukkit.getServer
 import org.bukkit.NamespacedKey
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.ItemStack
@@ -52,7 +54,7 @@ object TypeDataStorage {
             ?: AttackType.NORMAL_A
         }
         set(value) {
-            if (value == AttackType.NORMAL_A){
+            if (value == AttackType.NORMAL_A) {
                 persistentDataContainer.remove(keyAttack)
             } else {
                 persistentDataContainer[keyAttack, PersistentDataType.STRING] = value.id
@@ -77,9 +79,9 @@ object TypeDataStorage {
             ?: DefenseType.NORMAL_D
         }
         set(value) {
-            if (value == DefenseType.NORMAL_D){
+            if (value == DefenseType.NORMAL_D) {
                 persistentDataContainer.remove(keyDefense)
-            } else{
+            } else {
                 persistentDataContainer[keyDefense, PersistentDataType.STRING] = value.id
             }
 
@@ -115,19 +117,15 @@ object TypeDataStorage {
     @JvmStatic
     fun setEnchant(meta: ItemMeta, type: Type?) {
         val enchantments = meta.enchants
-        if (type == null) {
-            val types = enchantments.filter { it.key.key.key == "battr" }
-            if (types.isEmpty()) return
-            types.forEach { meta.removeEnchant(it.key) }
-            return
-        }
-        if (enchantments.isEmpty()) {
-            val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey(
-                "battr",
-                if (type is AttackType) "weapons/${type.id}" else "armors/${type.id}"
-            )] ?: throw IllegalStateException("No BA Enchantments found")
-            meta.addEnchant(ench, 1, true)
-        }
+        val types = enchantments.filter { it.key.key.namespace == "battr" }
+//        if (types.isEmpty()) getServer().sendMessage(mm.deserialize("no ench"))
+        types.forEach { meta.removeEnchant(it.key) }
+        type ?: return
+        val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey(
+            "battr",
+            if (type is AttackType) "weapons/${type.id}" else "armors/${type.id}"
+        )] ?: throw IllegalStateException("No BA Enchantments found")
+        meta.addEnchant(ench, 1, true)
     }
 
     @JvmStatic

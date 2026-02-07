@@ -4,16 +4,23 @@ import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.plugin
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.Attack
 import me.axiumyu.blueArchiveEffect.attribute.AttackType
+import me.axiumyu.blueArchiveEffect.attribute.DamageTable.hit
 import org.bukkit.entity.EntityType
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason
 
 object Config {
+
+    @JvmField
     val mobTypesList: MutableMap<EntityType, Attack> = mutableMapOf()
 
+    @JvmField
     val reasonBlackList: MutableList<SpawnReason> = mutableListOf()
+
+    var variationRate = 0.2
 
     fun loadConfig() {
         val config = plugin.config
+        variationRate = config.getDouble("variation-rate", 0.2)
         val mobConfig = config.getConfigurationSection("mobs")
 
         val reasons = config.getStringList("reason-blacklist").mapNotNull { it ->
@@ -57,7 +64,7 @@ object Config {
                 DefenseType.NORMAL_D
             }
 
-            val types = Attack(atkType, defType)
+            val types = atkType hit defType
             mobTypesList[type] = types
         }
     }

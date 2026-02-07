@@ -24,15 +24,12 @@ object ItemForgeType : Listener {
         val typeCore = event.inventory.secondItem ?: return
 
         if (!isTypeCore(typeCore)) return
-        event.viewers.first().sendMessage("is core")
         if (typeCore.persistentDataContainer[keyCharge, PersistentDataType.INTEGER] != 100) {
             event.result = null
             return
         }
-        event.viewers.first().sendMessage("100")
         val atkType = typeCore.itemMeta.atkType.nullIf(AttackType.NORMAL_A)
         val defType = typeCore.itemMeta.defType.nullIf(DefenseType.NORMAL_D)
-        event.viewers.first().sendMessage("atkType: $atkType, defType: $defType")
         val  result = equipment.clone()
         result.editMeta {
             it.atkType = AttackType.NORMAL_A

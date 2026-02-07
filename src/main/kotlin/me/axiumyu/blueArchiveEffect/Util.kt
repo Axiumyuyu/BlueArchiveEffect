@@ -42,4 +42,9 @@ object Util {
     fun <T> T?.nullIf(except : T): T? {
         return if (this == except) null else this
     }
+
+    @JvmStatic
+    fun <T> List<T>.drop(item: T): List<T>{
+        return this.filter { it != item }
+    }
 }
