@@ -1,20 +1,18 @@
 package me.axiumyu.blueArchiveEffect
 
-import me.axiumyu.blueArchiveEffect.attribute.effect.VanillaEffects
+import io.papermc.paper.potion.PotionMix
+import me.axiumyu.blueArchiveEffect.attribute.effect.ModifierListener
 import me.axiumyu.blueArchiveEffect.comand.ModifierHelper
 import me.axiumyu.blueArchiveEffect.comand.TypeHelper
 import me.axiumyu.blueArchiveEffect.config.Config
 import me.axiumyu.blueArchiveEffect.hologram.HologramService
-import me.axiumyu.blueArchiveEffect.listener.ChargeTypeCore
-import me.axiumyu.blueArchiveEffect.listener.CreateCore
-import me.axiumyu.blueArchiveEffect.listener.DamageModifier
-import me.axiumyu.blueArchiveEffect.listener.ItemForgeType
-import me.axiumyu.blueArchiveEffect.listener.MobSpawnType
-import me.axiumyu.blueArchiveEffect.effect.EffectManager
-import me.axiumyu.blueArchiveEffect.listener.RemoveType
+import me.axiumyu.blueArchiveEffect.listener.*
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.RecipeChoice
 import org.bukkit.plugin.java.JavaPlugin
-import kotlin.getValue
 
 class BlueArchiveEffect : JavaPlugin() {
 
@@ -34,6 +32,14 @@ class BlueArchiveEffect : JavaPlugin() {
 
         TypeHelper.register()
         ModifierHelper.register()
+         server.potionBrewer.addPotionMix(
+             PotionMix(
+                 NamespacedKey(plugin, "dummy_exp_brew"),
+                 ItemStack.of(Material.POTION), // 占位结果，反正会被 BrewEvent 拦截
+                 RecipeChoice.MaterialChoice(Material.POTION), // 底部
+                 RecipeChoice.MaterialChoice(Material.BEACON)
+             )
+ )
     }
 
     override fun onEnable() {
@@ -49,8 +55,7 @@ class BlueArchiveEffect : JavaPlugin() {
             ChargeTypeCore,
             ItemForgeType,
             RemoveType,
-            EffectManager,
-            VanillaEffects
+            ModifierListener
         ).forEach {
             server.pluginManager.registerEvents(it, this)
         }

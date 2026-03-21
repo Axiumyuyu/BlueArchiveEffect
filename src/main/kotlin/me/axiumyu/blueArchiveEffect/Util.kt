@@ -14,36 +14,29 @@ import org.bukkit.entity.Entity
 
 object Util {
 
-    @JvmStatic
     fun chooseSelectedEntity(ctx: CommandContext<CommandSourceStack>, argumentName: String): Entity? =
         ctx.getArgument(argumentName, EntitySelectorArgumentResolver::class.java)
             .resolve(ctx.source).first()
 
-    @JvmStatic
     fun <T> SuggestionsBuilder.suggestAll(list : Collection<T>) {
         list.forEach {
             suggest(it.toString())
         }
     }
 
-    @JvmStatic
     fun node(name: String) = Commands.literal(name)
 
-    @JvmStatic
     fun error(ctx: CommandContext<CommandSourceStack>, msg: String): Int {
         ctx.source.sender.sendMessage(mm.deserialize("<red>$msg"))
         return 0
     }
 
-    @JvmStatic
     fun Component.toPlainText() = plainText().serialize(this)
 
-    @JvmStatic
     fun <T> T?.nullIf(except : T): T? {
         return if (this == except) null else this
     }
 
-    @JvmStatic
     fun <T> List<T>.drop(item: T): List<T>{
         return this.filter { it != item }
     }

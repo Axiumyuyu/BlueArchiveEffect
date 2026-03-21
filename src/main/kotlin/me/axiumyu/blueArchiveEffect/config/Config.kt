@@ -10,10 +10,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason
 
 object Config {
 
-    @JvmField
     val mobTypesList: MutableMap<EntityType, Attack> = mutableMapOf()
 
-    @JvmField
     val reasonBlackList: MutableList<SpawnReason> = mutableListOf()
 
     var variationRate = 0.2

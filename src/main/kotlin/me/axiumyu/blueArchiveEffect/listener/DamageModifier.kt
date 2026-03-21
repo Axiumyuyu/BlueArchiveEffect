@@ -2,12 +2,13 @@ package me.axiumyu.blueArchiveEffect.listener
 
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.attribute.AttackModifier
+import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DamageTable.calculateBaseDamage
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.modifier
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
-import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Sound
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -19,12 +20,22 @@ object DamageModifier : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onDamage(event: EntityDamageEvent) {
-        val attacker = event.damageSource.causingEntity ?: return
+        val damageSource = event.damageSource
+        val attacker = damageSource.causingEntity ?: return
         val defender = event.entity
         if (attacker !is LivingEntity || defender !is LivingEntity) return
 
         // 攻击属性
-        val atkType = attacker.atkType
+        var atkType = attacker.atkType
+        if (damageSource.isIndirect) {
+            when (damageSource.directEntity?.type) {
+                EntityType.SPLASH_POTION -> {
+                    atkType = AttackType.MYSTIC
+                }
+
+                else -> {}
+            }
+        }
 //        val atkItemType = attacker.equipment?.itemInMainHand?.itemMeta?.atkType ?: return
 //        val finalAtkType = if (atkItemType != AttackType.NORMAL_A) {
 //            atkItemType
@@ -41,11 +52,11 @@ object DamageModifier : Listener {
 //            defType
 //        }
 
-        val rate = calculateBaseDamage(atkType, defType)
 
         // 属性特效加成
-        val atkEffect = attacker.modifier(atkType)
-        val defEffect = defender.modifier(defType)
+        val atkEffect = attacker.modifier(true)
+        val defEffect = defender.modifier(false)
+        val rate = calculateBaseDamage(atkType, defType)
 
         val (sound, text) = when (rate) {
             AttackModifier.WEAK -> {
@@ -68,12 +79,12 @@ object DamageModifier : Listener {
             }
         }
 
-        (attacker as? Player)?.inform(sound, text)
-        (defender as? Player)?.inform(sound, text)
+        (attacker as? Player)?.inform(sound, text, rate, true)
+        (defender as? Player)?.inform(sound, text, rate, false)
     }
 
-    fun Player.inform(sound: Sound, text: String) {
-
+    fun Player.inform(sound: Sound, text: String, rate: AttackModifier, isAttacker: Boolean) {
+        val prefix = if (isAttacker) "<green>你攻击了" else "<green>你被攻击了"
         this.playSound(this, sound, 1.0f, 1.0f)
         this.sendActionBar { mm.deserialize(text) }
     }

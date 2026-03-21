@@ -6,12 +6,11 @@ enum class AttackType(
     override val id: String,
     override val displayName: String,
     override val color: NamedTextColor
-) : Type{
+) : Type {
     NORMAL_A("normal", "常规", NamedTextColor.GRAY),
     BURST("burst", "爆发", NamedTextColor.RED),
     PIERCING("piercing", "贯通", NamedTextColor.YELLOW),
     MYSTIC("mystic", "神秘", NamedTextColor.BLUE),
-    VIBER("viber", "振动", NamedTextColor.LIGHT_PURPLE),
     DECOMPOSE("decompose", "分解", NamedTextColor.GREEN);
 
     companion object {

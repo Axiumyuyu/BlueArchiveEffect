@@ -3,11 +3,7 @@ package me.axiumyu.blueArchiveEffect
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import me.axiumyu.blueArchiveEffect.Util.toPlainText
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.inventory.ItemStack
-import java.awt.Color.HSBtoRGB
 import kotlin.math.roundToInt
 
 object SmartLoreBar {

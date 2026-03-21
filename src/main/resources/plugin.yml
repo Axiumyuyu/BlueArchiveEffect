@@ -2,7 +2,7 @@ name: BlueArchiveEffect
 version: '0.1.0'
 main: me.axiumyu.blueArchiveEffect.BlueArchiveEffect
 libraries:
-  - 'org.jetbrains.kotlin:kotlin-stdlib:2.3.0'
+  - 'org.jetbrains.kotlin:kotlin-stdlib:2.3.20'
 api-version: '1.21'
 depend:
   - packetevents

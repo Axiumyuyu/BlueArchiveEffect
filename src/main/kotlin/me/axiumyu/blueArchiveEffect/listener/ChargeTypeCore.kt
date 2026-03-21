@@ -19,7 +19,6 @@ import org.bukkit.persistence.PersistentDataType
 // Tested
 object ChargeTypeCore : Listener {
 
-    @JvmField
     val keyCharge = NamespacedKey("battr", "charge")
 
     @EventHandler
@@ -51,7 +50,7 @@ object ChargeTypeCore : Listener {
 
     }
 
-    fun processItem(item: ItemStack, type: Type,isATK: Boolean, processer : Player, finalDamage: Int) {
+    fun processItem(item: ItemStack, type: Type, isATK: kotlin.Boolean, processer : Player, finalDamage: Int) {
         val newItem = item.clone()
         val itemType = if (isATK) item.itemMeta.atkType else item.itemMeta.defType
         if (itemType != type) {
