@@ -61,12 +61,12 @@ object ModifierHelper {
                                         .executes { setEntityModifier(it, true) }
                                 )
                         )
-                )
-                .then(
-                    node("def")
                         .then(
-                            argument("value", DoubleArgumentType.doubleArg())
-                                .executes { setEntityModifier(it, false) }
+                            node("def")
+                                .then(
+                                    argument("value", DoubleArgumentType.doubleArg())
+                                        .executes { setEntityModifier(it, false) }
+                                )
                         )
                 )
 
@@ -81,8 +81,6 @@ object ModifierHelper {
 
     private fun checkEntityModifier(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
         val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
-        val typeId = StringArgumentType.getString(ctx, "type")
-
 
         val modifier = target.modifier(isAtk)
         ctx.sendMsgToSender(target.name, isAtk, modifier)
@@ -91,9 +89,7 @@ object ModifierHelper {
 
     private fun setEntityModifier(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
         val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
-        val typeId = StringArgumentType.getString(ctx, "type")
         val value = DoubleArgumentType.getDouble(ctx, "value")
-
 
         target.modifier(isAtk, value)
         ctx.sendMsgToSender(target.name, isAtk, value)

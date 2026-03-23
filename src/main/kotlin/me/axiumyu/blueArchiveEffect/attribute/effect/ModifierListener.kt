@@ -36,18 +36,27 @@ object ModifierListener : Listener {
         if (isExperiencePool(ingredient)) {
             val xpValue = getXpFromPool(ingredient)
             val potency = xpValue * 0.01 // 假设 1级 = 1%加成 (0.01)
+            val potionCount = listOfNotNull(
+                inventory.getItem(0),
+                inventory.getItem(1),
+                inventory.getItem(2)
+            ).size
 
             var isBrewed = false
             for (i in 0..2) {
                 val item = inventory.getItem(i) ?: continue
                 if (isBaseSpecialPotion(item)) {
                     val meta = item.itemMeta as? PotionMeta ?: continue
-
+                    val finalRate = String.format("%.1f", potency / potionCount / 100).toDouble()
                     // 写入攻击加成
-                    meta.modifier(isAtk = true, value = potency)
+                    meta.modifier(isAtk = true, value = finalRate)
+                    mm.deserialize("<green>攻击属性特效药水(<red>${potency/potionCount}%</red>)</green>").let {
+                        meta.itemName(it)
+                        meta.customName(it)
+                    }
+
                     meta.lore(listOf(
-                        mm.deserialize("<green>⚔ 共鸣药水 - <red>攻击</red></green>"),
-                        mm.deserialize("<red>⚔ 能力: ${potency * 100}%</red>")
+                        mm.deserialize("<red>${potency/potionCount}%攻属特效 (3:00)</red>")
                     ))
                     item.itemMeta = meta
                     isBrewed = true
@@ -72,9 +81,12 @@ object ModifierListener : Listener {
 
                     meta.modifier(isAtk = true, value = 0.0) // 抹除攻击
                     meta.modifier(isAtk = false, value = atkMod) // 转换为防御
+                    mm.deserialize("<green>防御特效药水(<aqua>${atkMod}%</aqua>)</green>").let {
+                        meta.itemName(it)
+                        meta.customName(it)
+                    }
                     meta.lore(listOf(
-                        mm.deserialize("<green>⛨ 共鸣药水 - <aqua>防御</aqua></green>"),
-                        mm.deserialize("<aqua>⛨ 能力: ${atkMod * 100}%</aqua>")
+                       mm.deserialize("<aqua>${atkMod}%防属特效 (3:00)</aqua>")
                     ))
                     item.itemMeta = meta
                     isBrewed = true
@@ -129,7 +141,7 @@ object ModifierListener : Listener {
                 if (player.modifier(isAtk = true) > 0 || player.modifier(isAtk = false) > 0) {
                     player.modifier(isAtk = true, value = 0.0)
                     player.modifier(isAtk = false, value = 0.0)
-                    player.sendMessage(mm.deserialize("<gray>法则共鸣已消散...</gray>"))
+                    player.sendMessage(mm.deserialize("<gray>属性特效加成已过期</gray>"))
                 }
             }
         }
@@ -144,13 +156,15 @@ object ModifierListener : Listener {
 
     private fun getXpFromPool(item: ItemStack): Double {
         // 读取经验池内的经验值
-        val exp = item.itemMeta?.persistentDataContainer?.get(NamespacedKey("specialitem", "exp"), PersistentDataType.DOUBLE) ?: 0.0
-        return exp * 0.25
+        val exp = item.itemMeta?.persistentDataContainer?.get(NamespacedKey("specialitem", "exp"), PersistentDataType.LONG) ?: 0L
+        return exp * 0.5
     }
 
     private fun isBaseSpecialPotion(item: ItemStack): Boolean {
         if (item.type != Material.POTION) return false
         val meta = item.itemMeta as? PotionMeta ?: return false
+        val potionEffects = meta.basePotionType?.potionEffects ?: return false
+        if (potionEffects.isEmpty()) return false
         val effect = meta.basePotionType?.potionEffects?.first()?.type ?: return false
         return  specialPotionTypes.contains(effect)
     }

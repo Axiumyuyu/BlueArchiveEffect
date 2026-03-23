@@ -19,7 +19,7 @@ import org.bukkit.persistence.PersistentDataType
 // Tested
 object ChargeTypeCore : Listener {
 
-    val keyCharge = NamespacedKey("battr", "charge")
+    val keyCharge = NamespacedKey(DATAPACK_NAMESPACE, "charge")
 
     @EventHandler
     fun onPlayerAttack(event: EntityDamageByEntityEvent) {

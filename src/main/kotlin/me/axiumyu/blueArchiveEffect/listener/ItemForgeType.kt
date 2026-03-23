@@ -29,17 +29,18 @@ object ItemForgeType : Listener {
         }
         val atkType = typeCore.itemMeta.atkType.nullIf(AttackType.NORMAL_A)
         val defType = typeCore.itemMeta.defType.nullIf(DefenseType.NORMAL_D)
-        val  result = equipment.clone()
+        val result = equipment.clone()
         result.editMeta {
-            if (it.atkType != AttackType.NORMAL_A || it.defType != DefenseType.NORMAL_D){
-                val maxDamage = result.getData(DataComponentTypes.MAX_DAMAGE)
-                if (maxDamage != null) {
-                    if (!result.hasData(DataComponentTypes.DAMAGE)){
-                        // 增加1点damage,用于查看耐久最大值的变化
-                        result.setData(DataComponentTypes.DAMAGE, 1)
-                    }
-                    result.setData(DataComponentTypes.MAX_DAMAGE, (maxDamage * 0.75).roundToInt())
+            val rate = if (it.atkType != AttackType.NORMAL_A || it.defType != DefenseType.NORMAL_D) {
+                0.75
+            } else 0.9
+            val maxDamage = result.getData(DataComponentTypes.MAX_DAMAGE)
+            if (maxDamage != null) {
+                if (!result.hasData(DataComponentTypes.DAMAGE)) {
+                    // 增加1点damage,用于查看耐久最大值的变化
+                    result.setData(DataComponentTypes.DAMAGE, 1)
                 }
+                result.setData(DataComponentTypes.MAX_DAMAGE, (maxDamage * rate).roundToInt())
             }
             it.atkType = AttackType.NORMAL_A
             it.defType = DefenseType.NORMAL_D

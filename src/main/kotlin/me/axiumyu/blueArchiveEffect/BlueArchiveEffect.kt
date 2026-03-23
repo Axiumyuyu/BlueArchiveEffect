@@ -16,7 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin
 
 class BlueArchiveEffect : JavaPlugin() {
 
-    companion object{
+    companion object {
         @JvmField
         val mm = MiniMessage.miniMessage()
 
@@ -27,19 +27,20 @@ class BlueArchiveEffect : JavaPlugin() {
         val updateTask by lazy(LazyThreadSafetyMode.NONE) { HologramService() }
 
     }
+
     override fun onLoad() {
         super.onLoad()
 
         TypeHelper.register()
         ModifierHelper.register()
-         server.potionBrewer.addPotionMix(
-             PotionMix(
-                 NamespacedKey(plugin, "dummy_exp_brew"),
-                 ItemStack.of(Material.POTION), // 占位结果，反正会被 BrewEvent 拦截
-                 RecipeChoice.MaterialChoice(Material.POTION), // 底部
-                 RecipeChoice.MaterialChoice(Material.BEACON)
-             )
- )
+        server.potionBrewer.addPotionMix(
+            PotionMix(
+                NamespacedKey(plugin, "dummy_exp_brew"),
+                ItemStack.of(Material.POTION), // 占位结果，反正会被 BrewEvent 拦截
+                RecipeChoice.MaterialChoice(Material.POTION), // 底部
+                RecipeChoice.MaterialChoice(Material.BEACON)
+            )
+        )
     }
 
     override fun onEnable() {
@@ -55,7 +56,8 @@ class BlueArchiveEffect : JavaPlugin() {
             ChargeTypeCore,
             ItemForgeType,
             RemoveType,
-            ModifierListener
+            ModifierListener,
+            NaturalItemType
         ).forEach {
             server.pluginManager.registerEvents(it, this)
         }

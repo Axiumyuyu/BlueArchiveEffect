@@ -7,9 +7,7 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver
 import me.axiumyu.blueArchiveEffect.BlueArchiveEffect.Companion.mm
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText
-import org.bukkit.NamespacedKey
 import org.bukkit.entity.Entity
 
 object Util {
