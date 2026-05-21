@@ -31,16 +31,21 @@ object ItemForgeType : Listener {
         val defType = typeCore.itemMeta.defType.nullIf(DefenseType.NORMAL_D)
         val result = equipment.clone()
         result.editMeta {
+
+            // 如果是新增属性,扣除25%最大耐久,如果是更改属性,扣除50%最大耐久
             val rate = if (it.atkType != AttackType.NORMAL_A || it.defType != DefenseType.NORMAL_D) {
-                0.75
-            } else 0.9
+                0.5
+            } else 0.75
             val maxDamage = result.getData(DataComponentTypes.MAX_DAMAGE)
             if (maxDamage != null) {
+                event.viewers.first().sendMessage("result has MAX_DAMAGE")
                 if (!result.hasData(DataComponentTypes.DAMAGE)) {
                     // 增加1点damage,用于查看耐久最大值的变化
                     result.setData(DataComponentTypes.DAMAGE, 1)
+                    event.viewers.first().sendMessage("result added 1 damage")
                 }
                 result.setData(DataComponentTypes.MAX_DAMAGE, (maxDamage * rate).roundToInt())
+                event.viewers.first().sendMessage("result reduced max damage")
             }
             it.atkType = AttackType.NORMAL_A
             it.defType = DefenseType.NORMAL_D

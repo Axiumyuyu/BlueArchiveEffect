@@ -16,11 +16,6 @@ import org.bukkit.persistence.PersistentDataHolder
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionType
 
-data class Attack(
-    val atk: AttackType,
-    val def: DefenseType
-)
-
 object TypeDataStorage {
 
     private const val WEIGHT_HELMET = 5
@@ -35,6 +30,8 @@ object TypeDataStorage {
     val keyAtkModifier = NamespacedKey(NAMESPACE_KEY, "atk_modifier")
 
     val keyDefModifier = NamespacedKey(NAMESPACE_KEY, "def_modifier")
+
+    val keyHideType = NamespacedKey(NAMESPACE_KEY, "hide_type")
 
     /*
      * 获取攻击类型,实体类型直接调用，不需要手动判断武器类型
@@ -114,14 +111,25 @@ object TypeDataStorage {
         }
 
     /*
- * 解析单件护甲的防御属性：PDC 烙印优先，原生材质垫底
- */
+     * 获取是否隐藏类型,拥有此标记时隐藏类型展示,或者展示为乱码,目前实现为乱码
+     */
+    var PersistentDataHolder.hideType: Boolean
+        get() {
+            return persistentDataContainer[keyHideType, PersistentDataType.BOOLEAN] == true
+        }
+        set(value) {
+            persistentDataContainer[keyHideType, PersistentDataType.BOOLEAN] = value
+        }
+
+    /*
+    * 解析单件护甲的防御属性：PDC 烙印优先，原生材质垫底
+    */
     private fun getArmorDefType(item: ItemStack): DefenseType {
         val meta = item.itemMeta ?: return DefenseType.NORMAL_D
 
         val pdcId = meta.persistentDataContainer[keyDefense, PersistentDataType.STRING]
         val pdcType = DefenseType.fromId(pdcId)
-            return pdcType ?: DefenseType.NORMAL_D
+        return pdcType ?: DefenseType.NORMAL_D
     }
 
     fun PersistentDataHolder.modifier(isAtk: Boolean): Double {
@@ -140,7 +148,6 @@ object TypeDataStorage {
 
     /**
      * 统一使用数据包附魔代替lore显示
-     * 为了代码整洁，你可以将此逻辑移回 AttributeDataService
      */
     fun setEnchant(meta: ItemMeta, type: Type?) {
         val enchantments = meta.enchants
@@ -150,18 +157,22 @@ object TypeDataStorage {
         val ench = registryAccess().getRegistry(RegistryKey.ENCHANTMENT)[NamespacedKey(
             DATAPACK_NAMESPACE,
             if (type is AttackType) "weapons/${type.id}" else "armors/${type.id}"
-        )] ?: throw IllegalStateException("No BA Enchantments found")
+        )] ?: throw IllegalStateException("No BA Enchantments found, install datapack!")
         meta.addEnchant(ench, 1, true)
+
+        if (meta.enchants.filter { it.key.key.namespace != DATAPACK_NAMESPACE }.isEmpty()) {
+            meta.setEnchantmentGlintOverride(false)
+        }
     }
 
-    fun isTypeCore(item: ItemStack): kotlin.Boolean {
+    fun isTypeCore(item: ItemStack): Boolean {
         val isCore = item.persistentDataContainer[NamespacedKey("overenchant", "item_type"), PersistentDataType.STRING]
         val level = item.persistentDataContainer[NamespacedKey("overenchant", "rune_level"), PersistentDataType.INTEGER]
         val enchants = item.enchantments.count()
         return isCore == "RUNE" && level == 3 && enchants <= 1
     }
 
-    fun isRightPotion(item: ItemStack): kotlin.Boolean {
+    fun isRightPotion(item: ItemStack): Boolean {
         val potion = item.itemMeta as? PotionMeta ?: return false
         return potion.basePotionType == PotionType.LONG_TURTLE_MASTER || potion.basePotionType == PotionType.STRONG_TURTLE_MASTER
     }
@@ -173,7 +184,7 @@ object TypeDataStorage {
             it.defType = DefenseType.NORMAL_D
             it.setMaxStackSize(1)
             it.setRarity(ItemRarity.RARE)
-            it.setEnchantmentGlintOverride(true)
+            it.setEnchantmentGlintOverride(false)
             it.customName(mm.deserialize("<!i><gray>属性核心"))
         }
         if (type == null) {

@@ -5,6 +5,11 @@ import me.axiumyu.blueArchiveEffect.attribute.DefenseType.*
 import me.axiumyu.blueArchiveEffect.attribute.AttackModifier.*
 import kotlin.to
 
+data class AtkDef(
+    val atk: AttackType,
+    val def: DefenseType
+)
+
 object DamageTable {
 
     private val damageTable = mapOf(
@@ -29,7 +34,7 @@ object DamageTable {
         MYSTIC hit LIGHT to RESIST    // 纯粹的自然生命血肉(Nature)天生排斥奥术(Arcane)
     )
 
-    infix fun AttackType.hit(armor: DefenseType) = Attack(this, armor)
+    infix fun AttackType.hit(armor: DefenseType) = AtkDef(this, armor)
 
     fun calculateBaseDamage(a: AttackType, d: DefenseType): AttackModifier {
         return damageTable[a hit d] ?: NC

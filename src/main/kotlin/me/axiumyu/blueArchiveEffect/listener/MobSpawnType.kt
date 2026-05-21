@@ -7,6 +7,7 @@ import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
 import me.axiumyu.blueArchiveEffect.config.Config.mobTypesList
 import me.axiumyu.blueArchiveEffect.config.Config.reasonBlackList
+import me.axiumyu.blueArchiveEffect.config.Config.variants
 import me.axiumyu.blueArchiveEffect.config.Config.variationRate
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
@@ -48,6 +49,18 @@ object MobSpawnType : Listener {
         // 默认规则
         if (reasonBlackList.contains(event.spawnReason)) return
         if (!mobTypesList.keys.contains(event.entityType)) return
+
+        // 根据生成原因覆写类型
+        if (variants.containsKey(entity.type)){
+            val overrideMap = variants[entity.type]!!
+
+            if (overrideMap.contains(event.spawnReason)){
+                val result = overrideMap[event.spawnReason]!!
+                entity.atkType = result.atk
+                entity.defType = result.def
+                return
+            }
+        }
         entity.atkType = mobTypesList[event.entityType]!!.atk
         entity.defType = mobTypesList[event.entityType]!!.def
     }
@@ -55,6 +68,6 @@ object MobSpawnType : Listener {
 
     private fun random(entity: LivingEntity) {
         entity.atkType = atkType.random()
-        entity.defType = defType.random()
+        entity.defType = defType.random() 
     }
 }

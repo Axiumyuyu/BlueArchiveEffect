@@ -51,7 +51,7 @@ object ModifierHelper {
             // === Set 分支 ===
             val setNode = node("set")
                 .requires { it.sender.hasPermission("baeffect.admin") }
-                // set entity <selector> <atk/def> <type>
+                // set entity <selector> <atk/def> <value>
                 .then(
                     argument("target", ArgumentTypes.entity())
                         .then(
@@ -73,7 +73,7 @@ object ModifierHelper {
             // 注册
             root.then(checkNode)
             root.then(setNode)
-            commands.register(root.build(), "BlueArchive RPG 属性管理")
+            commands.register(root.build(), "BlueArchive RPG 属性加成特效管理")
         }
     }
 

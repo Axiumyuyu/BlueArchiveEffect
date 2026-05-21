@@ -9,7 +9,7 @@ enum class AttackType(
 ) : Type {
     NORMAL_A("normal", "常规", NamedTextColor.GRAY),
     BURST("burst", "爆发", NamedTextColor.RED),
-    PIERCING("piercing", "贯通", NamedTextColor.YELLOW),
+    PIERCING("piercing", "贯穿", NamedTextColor.YELLOW),
     MYSTIC("mystic", "神秘", NamedTextColor.BLUE),
     DECOMPOSE("decompose", "分解", NamedTextColor.GREEN);
 

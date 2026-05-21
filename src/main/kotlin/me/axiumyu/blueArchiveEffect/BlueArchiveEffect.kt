@@ -57,7 +57,8 @@ class BlueArchiveEffect : JavaPlugin() {
             ItemForgeType,
             RemoveType,
             ModifierListener,
-            NaturalItemType
+            NaturalItemType,
+            AnvilAddGlint
         ).forEach {
             server.pluginManager.registerEvents(it, this)
         }

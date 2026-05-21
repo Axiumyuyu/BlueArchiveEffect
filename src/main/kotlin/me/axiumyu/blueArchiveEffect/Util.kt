@@ -14,7 +14,7 @@ object Util {
 
     fun chooseSelectedEntity(ctx: CommandContext<CommandSourceStack>, argumentName: String): Entity? =
         ctx.getArgument(argumentName, EntitySelectorArgumentResolver::class.java)
-            .resolve(ctx.source).first()
+            .resolve(ctx.source).firstOrNull()
 
     fun <T> SuggestionsBuilder.suggestAll(list : Collection<T>) {
         list.forEach {

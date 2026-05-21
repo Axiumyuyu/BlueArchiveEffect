@@ -15,6 +15,7 @@ import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.hideType
 import org.bukkit.Bukkit
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -56,14 +57,15 @@ class HologramService: BukkitRunnable() {
             player.eyeLocation.direction,
             32.0
         ) { it is LivingEntity && it != player }
+        val resultEntity = result?.hitEntity as? LivingEntity
+        if(result?.hitBlock != null) return
 
-        val targetEntity = result?.hitEntity as? LivingEntity
-        val targetId = targetEntity?.entityId ?: -1
+        val targetId = resultEntity?.entityId ?: -1
 
         // 1. 处理不再看向的实体或不满足条件的实体
         val toRemove = playerDisplays.keys.filter { it != targetId }.toMutableList()
 
-        if (targetEntity != null && !shouldShow(targetEntity)) {
+        if (resultEntity != null && !shouldShow(resultEntity)) {
             toRemove.add(targetId)
         }
 
@@ -73,9 +75,9 @@ class HologramService: BukkitRunnable() {
         }
 
         // 2. 处理当前看向的实体
-        if (targetEntity != null && shouldShow(targetEntity)) {
-            val info = getInfo(targetEntity)
-            val spawnLoc = targetEntity.eyeLocation.add(0.0, 0.5, 0.0)
+        if (resultEntity != null && shouldShow(resultEntity)) {
+            val info = getInfo(resultEntity)
+            val spawnLoc = resultEntity.eyeLocation.add(0.0, 1.00, 0.0)
 
             val existing = playerDisplays[targetId]
             if (existing == null) {
@@ -166,10 +168,15 @@ class HologramService: BukkitRunnable() {
     }
 
     private fun shouldShow(entity: LivingEntity): Boolean {
-        return entity.atkType != AttackType.NORMAL_A || entity.defType != DefenseType.NORMAL_D || entity.hasPotionEffect(PotionEffectType.INVISIBILITY)
+        return entity.atkType != AttackType.NORMAL_A ||
+                entity.defType != DefenseType.NORMAL_D ||
+                entity.hasPotionEffect(PotionEffectType.INVISIBILITY)
     }
 
     private fun getInfo(entity: LivingEntity): String {
+        if (entity.hideType){
+            return "<obfuscated>??????</obfuscated> | <obfuscated>??????</obfuscated>"
+        }
         val atk = entity.atkType
         val def = entity.defType
         return "<${atk.color.asHexString()}>${atk.displayName}<gray> | <${def.color.asHexString()}>${def.displayName}"

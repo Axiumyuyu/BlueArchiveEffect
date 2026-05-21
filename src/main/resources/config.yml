@@ -6,178 +6,150 @@ variation-rate: 0.05
 
 mobs:
 
-  # atk类型： normal(常规，默认值，可不写), burst(爆发), piercing(贯通), mystic(神秘), viber(振动), decompose(分解)
-  # def类型： # normal(常规装甲，默认值，可不写), light(轻装甲), heavy(重装甲), special(特殊装甲), elastic(弹力装甲), composite(复合装甲)
+  # atk类型： normal(常规，默认值，可不写), burst(爆发), piercing(贯通), mystic(神秘), decompose(分解)
+  # def类型： # normal(常规装甲，默认值，可不写), light(轻装甲), heavy(重装甲), special(特殊装甲), composite(复合装甲)
 
-  # ===========================
-  # 主世界 - 常见敌对生物
-  # ===========================
-
-  # 苦力怕：充满火药且皮肤独特 -> 弹力装甲(Elastic)，爆炸攻击 -> 爆发(Burst)
-  CREEPER:
-    atk: burst
-    def: elastic
-
-  # 僵尸：腐肉身躯 -> 轻装甲(Light)，感染/抓挠 -> 分解(Decompose)或常规
-  # 设计意图：作为最常见的怪，怕爆发(红)，鼓励玩家用红武器割草
+  # ==========================================
+  # 【主世界：黑夜的诅咒 (The Undead & Night)】
+  # ==========================================
+  
   ZOMBIE:
-    atk: burst
-    def: light
-
-  # 骷髅：骨架结构 -> 轻装甲(Light)，弓箭射击 -> 贯通(Piercing)
-  SKELETON:
-    atk: piercing
-    def: light
-
-  # 蜘蛛/洞穴蜘蛛：几丁质外壳但易碎 -> 轻装甲(Light)
-  SPIDER:
-    atk: piercing
-    def: light
-
-  CAVE_SPIDER:
-    atk: decompose # 毒性攻击
-    def: light
-
-  # 女巫：魔法长袍 -> 特殊装甲(Special)，药水投掷 -> 神秘(Mystic)
-  WITCH:
-    atk: mystic
-    def: special
-
-  # 史莱姆：粘液身体 -> 弹力装甲(Elastic)，物理撞击 -> 常规
-  SLIME:
-    atk: viber
-    def: elastic
-
-  # 幻翼：亡灵且虚幻 -> 特殊装甲(Special)，俯冲尖啸 -> 振动(Viber)
-  PHANTOM:
-    atk: viber
-    def: special
-
-  BREEZE:
-    atk: burst
-    def: elastic
-
-  # ===========================
-  # 主世界 - 变种与灾厄村民
-  # ===========================
-
-  # 尸壳：干燥的尸体，比普通僵尸硬 -> 重装甲(Heavy)
+    atk: normal    # 徒手挥击，最基础的物理伤害
+    def: light     # 腐烂的血肉，极度畏惧爆发(剑/矛)的切割
+# 如果生物以某种原因生成,则用下面的配置覆盖
+#    override:
+#      COMMAND:
+#        atk: normal
+#        def: light
+    
   HUSK:
     atk: normal
-    def: heavy
+    def: heavy     # 尸壳：被沙漠风干硬化的躯体，像披着一层沙结石护甲（弱贯通）
 
-  # 溺尸：水肿尸体 -> 轻装甲(Light)，三叉戟 -> 贯通(Piercing)
-  DROWNED:
-    atk: piercing
+  SKELETON:
+    atk: piercing  # 弓箭射击
+    def: heavy     # 纯粹的骨骼支撑，没有血肉缓冲，免疫爆发切割，极度畏惧重锤(分解)震碎
+    
+  STRAY:
+    atk: piercing  # 迟缓箭矢
+    def: light     # 流浪者：穿着破烂的布衣防寒（柔甲，弱爆发）
+    
+  CREEPER:
+    atk: burst     # 爆炸产生大面积的撕裂与冲击
+    def: light     # 植物般的柔软躯体
+    
+  SPIDER:
+    atk: piercing  # 尖锐的毒牙刺穿护甲
+    def: light     # 脆弱的节肢动物外壳
+
+  CAVE_SPIDER:
+    atk: mystic    # 洞穴蜘蛛的攻击附带强烈的毒素(魔法/法则伤害)
     def: light
 
-  # 卫道士：手持斧头 -> 爆发(Burst)，普通衣物 -> 轻装甲(Light)
+  SLIME:
+    atk: decompose # 巨大的体型砸地，产生钝器般的震荡波
+    def: composite # 极具弹性的凝胶复合体，吸收穿刺和切割，只怕被钝器(分解)强行震散
+
+  WITCH:
+    atk: mystic    # 纯粹的魔法药水洗地
+    def: light     # 肉体凡胎，穿着布袍（自带一定的魔法抵抗，极度畏惧物理爆发）
+
+  # ==========================================
+  # 【灾厄帝国：机械与暴力的结晶 (Illagers)】
+  # ==========================================
+  
+  PILLAGER:
+    atk: piercing  # 掠夺者：制式弩箭
+    def: light     # 只穿着简单的皮革和布衣
+
   VINDICATOR:
-    atk: piercing
-    def: light
+    atk: decompose # 卫道士：手持极其致命的铁斧，疯狂的重劈
+    def: light     # 放弃防御，追求极致的暴力
+
+  EVOKER:
+    atk: mystic    # 唤魔者：召唤地刺和尖牙，纯粹的黑魔法
+    def: special   # 身上环绕着魔法护盾（秘甲，弱魔法同源过载，免疫普通钝器）
+
+  VEX:
+    atk: piercing  # 恼鬼：手持铁剑，但能穿透方块直接刺入身体
+    def: special   # 幽灵灵体，物理武器难以命中，必须用魔法(神秘)消灭
+
+  RAVAGER:
+    atk: decompose # 劫掠兽：狂暴的冲撞和咆哮震荡
+    def: composite # 披着厚重马鞍与致密厚皮的终极生化兵器（弱分解）
 
   ILLUSIONER:
-    atk: piercing
-    def: special
+    atk: mystic    # 攻击：虽然拿弓，但射出的是附带致盲与魔法力量的箭矢
+    def: special   # 防御：你打的往往是他的幻影或魔法分身（秘甲，弱魔法，免疫物理爆发）
 
-
-  # 唤魔者：法师 -> 特殊装甲(Special)，尖牙/魔法 -> 神秘(Mystic)
-  EVOKER:
-    atk: mystic
-    def: special
-
-  # 劫掠兽：重型护甲兽 -> 重装甲(Heavy)，撞击 -> 爆发(Burst)
-  RAVAGER:
-    atk: burst
-    def: heavy
-
-  # 恼鬼：灵体 -> 特殊装甲(Special)，穿墙攻击 -> 神秘(Mystic)
-  VEX:
-    atk: mystic
-    def: special
-
-  # 铁傀儡：纯金属 -> 重装甲(Heavy)，重拳 -> 爆发(Burst)
   IRON_GOLEM:
-    atk: burst
-    def: heavy
+    atk: decompose # 铁傀儡：将敌人砸飞天际的重型机械拳
+    def: heavy     # 纯铁打造的刚性躯体
 
-  # ===========================
-  # 下界生物
-  # ===========================
+  # ==========================================
+  # 【下界：焦热的深渊 (The Nether)】
+  # ==========================================
 
-  # 僵尸猪灵：半腐烂但有金甲 -> 轻装甲(Light)
-  # (为了不让下界全是重装甲，保留一些给爆发属性发挥的空间)
   ZOMBIFIED_PIGLIN:
-    atk: mystic
-    def: light
-
+    atk: burst     # 僵尸猪灵：手持金剑进行横扫切割
+    def: light     # 腐烂的半血肉躯体
+    
   PIGLIN:
-    atk: piercing
+    atk: piercing  # 猪灵：主武器是弩（虽然有时拿剑，但定调为远程穿透兵种）
     def: light
 
-  # 猪灵暴君：全套金甲且强壮 -> 重装甲(Heavy)，斧头 -> 爆发(Burst)
   PIGLIN_BRUTE:
-    atk: burst
-    def: heavy
+    atk: decompose # 猪灵蛮兵：挥舞金斧的致命钝击者
+    def: special   # 身上佩戴着大量的黄金臂铠和护盾（金属性=秘甲）
 
-  # 烈焰人：元素生物 -> 特殊装甲(Special)，火球 -> 爆发(Burst)
   BLAZE:
-    atk: burst
-    def: special
+    atk: mystic    # 烈焰人：喷吐元素火球
+    def: special   # 由旋转的烈焰棒和魔法力场构成（极度弱同源魔法）
 
-  # 恶魂：巨大的幽灵 -> 特殊装甲(Special)，火球爆炸 -> 爆发(Burst)
   GHAST:
-    atk: burst
-    def: special
+    atk: burst     # 恶魂：火球爆炸产生大面积物理破坏
+    def: special   # 悬浮的灵魂体（秘甲）
 
-  # 凋灵骷髅：被烧焦的骨骼，非常坚硬 -> 复合装甲(Composite)
-  # 设计意图：强迫玩家在下界要塞使用分解(绿)或重击(红)
   WITHER_SKELETON:
-    atk: decompose # 凋零效果
-    def: composite
+    atk: normal    # 凋灵骷髅：石剑挥砍（凋灵效果由原版机制结算，不叠加极化）
+    def: heavy     # 碳化的坚硬骨骼
 
-  # 岩浆怪：岩浆核心 -> 弹力装甲(Elastic)
   MAGMA_CUBE:
-    atk: burst
-    def: elastic
+    atk: decompose # 岩浆怪：沉重的岩浆岩砸击
+    def: composite # 岩浆与岩石交织的复合体（极度弱分解震荡）
 
-  # ===========================
-  # 末地生物
-  # ===========================
+  # ==========================================
+  # 【末地与深海：虚空与深渊的孑遗 (The End & Deep)】
+  # ==========================================
 
-  # 末影人：空间生物 -> 特殊装甲(Special)，搬运/攻击 -> 神秘(Mystic)
   ENDERMAN:
-    atk: mystic
-    def: special
+    atk: decompose # 末影人(主世界/外岛)：极其沉重的手臂挥击
+    def: special   # 虚空生物，自带偏转弹射物的空间力场（秘甲，极度畏惧魔法爆发）
+    # 注：末地主岛的末影人需要在代码逻辑中被强制覆盖为 Random
 
-  # 潜影贝：拥有坚硬的外壳 -> 复合装甲(Composite)，导弹 -> 神秘(Mystic)
   SHULKER:
-    atk: mystic
-    def: composite
+    atk: mystic    # 潜影贝：发射反重力追踪魔法弹
+    def: composite     # 坚不可摧的紫珀质甲壳（刚甲，需要贯通箭矢射穿缝隙）
 
-  # ===========================
-  # 海洋与特殊
-  # ===========================
-
-  # 守卫者/远古守卫者：带有尖刺的湿滑皮肤 -> 弹力装甲(Elastic)
-  # 远古守卫者作为小Boss -> 复合装甲(Composite)
   GUARDIAN:
-    atk: mystic # 激光
-    def: elastic
+    atk: mystic    # 守卫者：深海激光射线
+    def: heavy     # 坚硬的石质外壳和尖刺（刚甲，免疫切割，弱贯通）
+
   ELDER_GUARDIAN:
-    atk: mystic
-    def: composite
+    atk: mystic    # 远古守卫者：更强的凝视与挖掘疲劳咒语
+    def: composite # 活了千万年的石化复合躯体，普通弓箭已无法穿透，必须用重锤(分解)震碎
 
-  # 监守者：幽匿块构成，吸收声音 -> 复合装甲(Composite)，音波攻击 -> 振动(Viber)
-  # 这是一个极强的怪物，复合装甲弱分解(Decompose)，符合"分解幽匿"的概念
+  # ==========================================
+  # 【特殊/不可名状之物 (Anomalies)】
+  # ==========================================
+
+  PHANTOM:
+    atk: piercing  # 幻翼：高空俯冲的尖锐撕咬
+    def: special   # 不眠者的梦魇具象化（幽灵态，弱神秘）
+
   WARDEN:
-    atk: viber
-    def: composite
-
-  # 凋灵：BOSS -> 复合装甲(Composite)，凋零之首 -> 分解(Decompose)
-  WITHER:
-    atk: decompose
-    def: composite
+    atk: decompose # 监守者：足以秒杀一切的音波震荡与重拳
+    def: composite # 幽匿脉络与白骨交织的终极复合生物
 
 
 # ===========================

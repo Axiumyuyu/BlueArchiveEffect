@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.inventory.CraftItemEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.world.LootGenerateEvent
 import org.bukkit.inventory.ItemStack
 
 const val DATAPACK_NAMESPACE = "battr"
@@ -24,7 +25,8 @@ const val DATAPACK_NAMESPACE = "battr"
 object NaturalItemType : Listener {
 
     private fun getItemTag(key: String): Tag<Material?> {
-        return getServer().getTag(Tag.REGISTRY_ITEMS, NamespacedKey(DATAPACK_NAMESPACE, key), Material::class.java) ?: throw IllegalStateException("Failed to get item tag: $key, install datapack before using this plugin!")
+        return getServer().getTag(Tag.REGISTRY_ITEMS, NamespacedKey(DATAPACK_NAMESPACE, key), Material::class.java)
+            ?: throw IllegalStateException("Failed to get item tag: $key, install datapack before using this plugin!")
     }
 
     // ---------------------------------------------------------
@@ -104,8 +106,14 @@ object NaturalItemType : Listener {
         processItem(event.cursor)
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onPlayerJoin(event: PlayerJoinEvent) {
-        event.player.inventory.contents.forEach { processItem(it) }
+    @EventHandler
+    fun onLootGen(event: LootGenerateEvent) {
+        val loot = mutableListOf<ItemStack>()
+        loot.addAll(event.loot)
+        loot.forEach { processItem(it) }
+        event.setLoot(loot)
     }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerJoin(event: PlayerJoinEvent) = event.player.inventory.contents.forEach { processItem(it) }
 }

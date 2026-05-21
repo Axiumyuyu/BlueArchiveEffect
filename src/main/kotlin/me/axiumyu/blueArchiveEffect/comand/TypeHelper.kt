@@ -16,6 +16,7 @@ import me.axiumyu.blueArchiveEffect.attribute.AttackType
 import me.axiumyu.blueArchiveEffect.attribute.DefenseType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
+import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.hideType
 import me.axiumyu.blueArchiveEffect.config.Config
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.LivingEntity
@@ -66,13 +67,21 @@ object TypeHelper {
                         .then(node("atk")
                             .then(argument("type", StringArgumentType.word())
                                 .suggests { _, b -> AttackType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
-                                .executes { setEntity(it, true) }
+                                .executes { setEntity(it, true, false) }
+                                .then(
+                                    node("hide")
+                                        .executes { setEntity(it, false, true) }
+                                )
                             )
                         )
                         .then(node("def")
                             .then(argument("type", StringArgumentType.word())
                                 .suggests { _, b -> DefenseType.entries.forEach { b.suggest(it.id) }; b.buildFuture() }
-                                .executes { setEntity(it, false) }
+                                .executes { setEntity(it, false, false) }
+                                .then(
+                                    node("hide")
+                                        .executes { setEntity(it, false, true) }
+                                )
                             )
                         )
                     )
@@ -120,7 +129,7 @@ object TypeHelper {
         return Command.SINGLE_SUCCESS
     }
 
-    private fun setEntity(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean): Int {
+    private fun setEntity(ctx: CommandContext<CommandSourceStack>, isAtk: Boolean, hide: Boolean): Int {
         val target = chooseSelectedEntity(ctx, "target") ?: return error(ctx, "未选择实体")
         val typeId = StringArgumentType.getString(ctx, "type")
 
@@ -135,6 +144,7 @@ object TypeHelper {
             target.defType = type
             ctx.sendMsgToSender(target.name, "自身防御", type.displayName, type.color)
         }
+        target.hideType = hide
         return Command.SINGLE_SUCCESS
     }
 

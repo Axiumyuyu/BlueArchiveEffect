@@ -8,6 +8,7 @@ import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.atkType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.createCore
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.defType
 import me.axiumyu.blueArchiveEffect.attribute.TypeDataStorage.isTypeCore
+import net.kyori.adventure.text.minimessage.MiniMessage.miniMessage
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -50,7 +51,7 @@ object ChargeTypeCore : Listener {
 
     }
 
-    fun processItem(item: ItemStack, type: Type, isATK: kotlin.Boolean, processer : Player, finalDamage: Int) {
+    fun processItem(item: ItemStack, type: Type, isATK: Boolean, processer : Player, finalDamage: Int) {
         val newItem = item.clone()
         val itemType = if (isATK) item.itemMeta.atkType else item.itemMeta.defType
         if (itemType != type) {
@@ -81,6 +82,12 @@ object ChargeTypeCore : Listener {
                 100,
                 filledColor = "<${type.color.asHexString()}>"
             )
+
+            // 充满后闪烁
+            if (progress + charge >= 100) {
+                newItem.editMeta { it.setEnchantmentGlintOverride(true) }
+            }
+
             newItem.editPersistentDataContainer {
                 it[keyCharge, PersistentDataType.INTEGER] = (progress + charge).coerceIn(0, 100)
             }
